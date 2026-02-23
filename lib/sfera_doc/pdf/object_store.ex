@@ -54,7 +54,7 @@ defmodule SferaDoc.Pdf.ObjectStore do
   end
 
   @doc """
-  Persists a rendered PDF binary. Failures are logged but do not propagate — the
+  Persists a rendered PDF binary. Failures are logged but do not propagate, the
   caller always receives the PDF regardless of whether storage succeeded.
   """
   @spec put(String.t(), pos_integer(), String.t(), binary()) :: :ok
@@ -70,7 +70,7 @@ defmodule SferaDoc.Pdf.ObjectStore do
 
           {:error, reason} ->
             Logger.warning(
-              "SferaDoc.Pdf.ObjectStore: failed to store PDF #{name}/#{version} — #{inspect(reason)}"
+              "SferaDoc.Pdf.ObjectStore: failed to store PDF #{name}/#{version} #{inspect(reason)}"
             )
 
             :ok

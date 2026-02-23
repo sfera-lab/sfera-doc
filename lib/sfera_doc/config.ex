@@ -9,21 +9,21 @@ defmodule SferaDoc.Config do
 
   These are read with `Application.compile_env/3` at compilation time:
 
-  - `:store, :table_name` — Ecto table name (default: `"sfera_doc_templates"`)
+  - `:store, :table_name`: Ecto table name (default: `"sfera_doc_templates"`)
 
   ## Runtime options
 
   These are read with `Application.get_env/3` at runtime:
 
-  - `:store, :adapter` — required, the storage backend module
-  - `:store, :repo` — required when using `SferaDoc.Store.Ecto`
-  - `:redis` — Redis connection options (host, port, url, etc.)
-  - `:cache, :enabled` — whether to cache parsed template ASTs (default: `true`)
-  - `:cache, :ttl` — AST cache TTL in seconds (default: `300`)
-  - `:pdf_hot_cache, :adapter` — PDF hot-cache backend (`:redis` or `:ets`, default: disabled)
-  - `:pdf_hot_cache, :ttl` — hot-cache TTL in seconds (default: `60`)
-  - `:pdf_object_store, :adapter` — PDF object-store adapter module (default: disabled)
-  - `:chromic_pdf` — options passed directly to `ChromicPDF` (default: `[]`)
+  - `:store, :adapter`: required, the storage backend module
+  - `:store, :repo`: required when using `SferaDoc.Store.Ecto`
+  - `:redis`: Redis connection options (host, port, url, etc.)
+  - `:cache, :enabled`: whether to cache parsed template ASTs (default: `true`)
+  - `:cache, :ttl`: AST cache TTL in seconds (default: `300`)
+  - `:pdf_hot_cache, :adapter`: PDF hot-cache backend (`:redis` or `:ets`, default: disabled)
+  - `:pdf_hot_cache, :ttl`: hot-cache TTL in seconds (default: `60`)
+  - `:pdf_object_store, :adapter`: PDF object-store adapter module (default: disabled)
+  - `:chromic_pdf`: options passed directly to `ChromicPDF` (default: `[]`)
   """
 
   # ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ defmodule SferaDoc.Config do
 
   @doc """
   Returns the Ecto table name for the templates table.
-  Read at compile time — used as a module attribute in `SferaDoc.Store.Ecto.Record`.
+  Read at compile time: used as a module attribute in `SferaDoc.Store.Ecto.Record`.
   """
   def ecto_table_name, do: @ecto_table_name
 
@@ -114,7 +114,7 @@ defmodule SferaDoc.Config do
   # Runtime: PDF hot cache
   # ---------------------------------------------------------------------------
 
-  @doc "Returns the PDF hot-cache adapter — `:redis`, `:ets`, or `nil` (disabled)."
+  @doc "Returns the PDF hot-cache adapter: `:redis`, `:ets`, or `nil` (disabled)."
   def pdf_hot_cache_adapter do
     Application.get_env(:sfera_doc, :pdf_hot_cache, [])[:adapter]
   end

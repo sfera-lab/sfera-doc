@@ -13,8 +13,8 @@ defmodule SferaDoc.Renderer do
   Renders a template to a PDF binary.
 
   Options:
-  - `:version` — render a specific version instead of the active one
-  - `:chromic_pdf` — extra options passed to `ChromicPDF.print_to_pdf/2`
+  - `:version`: render a specific version instead of the active one
+  - `:chromic_pdf`: extra options passed to `ChromicPDF.print_to_pdf/2`
 
   Returns `{:ok, pdf_binary}` or `{:error, reason}`.
   """

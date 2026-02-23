@@ -48,7 +48,7 @@ defmodule SferaDoc.Cache.ParsedTemplate do
 
   @doc """
   Returns `{:ok, ast}` on cache hit within TTL, `:miss` otherwise.
-  Reads ETS directly — no GenServer call overhead.
+  Reads ETS directly, no GenServer call overhead.
   """
   @spec get(String.t(), pos_integer()) :: {:ok, term()} | :miss
   def get(name, version) do

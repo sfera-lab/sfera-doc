@@ -19,7 +19,7 @@ defmodule SferaDoc.Store.Ecto.Migration do
   database level without advisory locks.
 
   On MySQL and SQLite this index is omitted (partial indexes are not supported
-  or behave differently) — the application layer handles the invariant instead.
+  or behave differently), the application layer handles the invariant instead.
   """
 
   defmacro __using__(_opts) do

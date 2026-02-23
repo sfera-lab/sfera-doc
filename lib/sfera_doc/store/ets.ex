@@ -85,7 +85,7 @@ defmodule SferaDoc.Store.ETS do
     GenServer.call(__MODULE__, {:delete, name})
   end
 
-  @doc "Clears all entries — test helper only."
+  @doc "Clears all entries: test helper only."
   def reset, do: GenServer.call(__MODULE__, :reset)
 
   # ---------------------------------------------------------------------------

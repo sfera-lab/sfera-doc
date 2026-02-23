@@ -8,14 +8,14 @@ defmodule SferaDoc.Template do
 
   ## Fields
 
-  - `:id` — internal identifier (UUID string for Ecto, integer for ETS, string for Redis)
-  - `:name` — human-readable identifier used in the public API (e.g. `"invoice"`)
-  - `:body` — Liquid template source string
-  - `:version` — monotonically increasing integer per name; starts at 1
-  - `:is_active` — `true` for the currently active version of a given name
-  - `:variables_schema` — optional map declaring required/optional variables:
+  - `:id`: internal identifier (UUID string for Ecto, integer for ETS, string for Redis)
+  - `:name`: human-readable identifier used in the public API (e.g. `"invoice"`)
+  - `:body`: Liquid template source string
+  - `:version`: monotonically increasing integer per name; starts at 1
+  - `:is_active`: `true` for the currently active version of a given name
+  - `:variables_schema`: optional map declaring required/optional variables:
     `%{"required" => ["name", "date"], "optional" => ["footer"]}`
-  - `:inserted_at` / `:updated_at` — timestamps
+  - `:inserted_at` / `:updated_at`: timestamps
 
   ## Variable Validation
 

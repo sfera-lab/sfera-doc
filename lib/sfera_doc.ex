@@ -4,14 +4,14 @@ defmodule SferaDoc do
 
   SferaDoc combines three things:
 
-  1. **Template storage** — Liquid templates are stored in your database (or ETS/Redis)
+  1. **Template storage**: Liquid templates are stored in your database (or ETS/Redis)
      with automatic versioning. Each `update_template/3` call creates a new version
      while keeping the full history.
 
-  2. **Template parsing** — Templates are parsed with the [`solid`](https://hex.pm/packages/solid)
+  2. **Template parsing**: Templates are parsed with the [`solid`](https://hex.pm/packages/solid)
      Liquid template engine. Parsed ASTs are cached in ETS to avoid repeated parsing.
 
-  3. **PDF rendering** — Rendered HTML is passed to
+  3. **PDF rendering**: Rendered HTML is passed to
      [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based) to produce
      a PDF binary.
 
@@ -47,7 +47,7 @@ defmodule SferaDoc do
 
   | Adapter | Use case |
   |---|---|
-  | `SferaDoc.Store.Ecto` | Production — PostgreSQL, MySQL, SQLite |
+  | `SferaDoc.Store.Ecto` | Production: PostgreSQL, MySQL, SQLite |
   | `SferaDoc.Store.ETS` | Development and testing only |
   | `SferaDoc.Store.Redis` | Distributed / Redis-heavy stacks |
 
@@ -91,8 +91,8 @@ defmodule SferaDoc do
 
   ## Options
 
-  - `:version` — render a specific version instead of the currently active one
-  - `:chromic_pdf` — extra options forwarded to `ChromicPDF.print_to_pdf/2`
+  - `:version`: render a specific version instead of the currently active one
+  - `:chromic_pdf`: extra options forwarded to `ChromicPDF.print_to_pdf/2`
 
   ## Returns
 
@@ -122,7 +122,7 @@ defmodule SferaDoc do
 
   ## Options
 
-  - `:variables_schema` — map with `"required"` and/or `"optional"` lists:
+  - `:variables_schema`: map with `"required"` and/or `"optional"` lists:
     `%{"required" => ["name"], "optional" => ["footer"]}`
 
   ## Example
@@ -166,7 +166,7 @@ defmodule SferaDoc do
 
   ## Options
 
-  - `:version` — return a specific version number instead of the active one
+  - `:version`: return a specific version number instead of the active one
 
   ## Examples
 

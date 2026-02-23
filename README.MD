@@ -2,11 +2,11 @@
 
 PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF via Chrome.
 
-- **Template storage** — Liquid templates stored with full version history (Ecto, ETS, or Redis)
-- **Template parsing** — Powered by [`solid`](https://hex.pm/packages/solid); parsed ASTs are cached in ETS
-- **PDF rendering** — HTML rendered by [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based)
-- **PDF storage** — Two-tier: Redis/ETS hot cache + durable object store (S3, Azure Blob, or file system)
-- **Variable validation** — Declare required variables per template and get clear errors before rendering
+- **Template storage** - Liquid templates stored with full version history (Ecto, ETS, or Redis)
+- **Template parsing** - Powered by [`solid`](https://hex.pm/packages/solid); parsed ASTs are cached in ETS
+- **PDF rendering** - HTML rendered by [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based)
+- **PDF storage** - Two-tier: Redis/ETS hot cache + durable object store (S3, Azure Blob, or file system)
+- **Variable validation** - Declare required variables per template and get clear errors before rendering
 
 ## Installation
 

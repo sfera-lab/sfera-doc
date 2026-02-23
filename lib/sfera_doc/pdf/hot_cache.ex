@@ -5,9 +5,9 @@ defmodule SferaDoc.Pdf.HotCache do
   Sits in front of the object store to serve repeat requests with minimal latency.
   Supports two backends:
 
-  - **`:redis`** — Distributed, suitable for multi-node deployments. Starts its own
+  - **`:redis`**: Distributed, suitable for multi-node deployments. Starts its own
     named Redix connection independent of the template store connection.
-  - **`:ets`** — Process-local ETS table. Zero external dependencies, suitable for
+  - **`:ets`**: Process-local ETS table. Zero external dependencies, suitable for
     single-node deployments or development.
 
   **Disabled by default.** Enable via:

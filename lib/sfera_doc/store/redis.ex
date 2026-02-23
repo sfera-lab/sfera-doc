@@ -22,9 +22,9 @@ defmodule SferaDoc.Store.Redis do
 
   Templates are stored under the following Redis keys:
 
-  - `sfera_doc:template:{name}:version:{n}` — JSON of the full template
-  - `sfera_doc:template:{name}:active` — active version number (string)
-  - `sfera_doc:template:{name}:versions` — sorted set of all version numbers
+  - `sfera_doc:template:{name}:version:{n}`: JSON of the full template
+  - `sfera_doc:template:{name}:active`: active version number (string)
+  - `sfera_doc:template:{name}:versions`: sorted set of all version numbers
 
   All template names are tracked in `sfera_doc:names` (a Redis set).
   """
