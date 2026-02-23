@@ -33,7 +33,12 @@ defmodule SferaDoc.Renderer do
 
       {:error, reason} ->
         duration = System.monotonic_time() - start
-        :telemetry.execute([:sfera_doc, :render, :exception], %{duration: duration}, Map.put(meta, :error, reason))
+
+        :telemetry.execute(
+          [:sfera_doc, :render, :exception],
+          %{duration: duration},
+          Map.put(meta, :error, reason)
+        )
     end
 
     result

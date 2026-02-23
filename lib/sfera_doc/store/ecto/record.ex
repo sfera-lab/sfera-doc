@@ -14,11 +14,11 @@ defmodule SferaDoc.Store.Ecto.Record do
   @table_name SferaDoc.Config.ecto_table_name()
 
   schema @table_name do
-    field :name, :string
-    field :body, :string
-    field :version, :integer, default: 1
-    field :is_active, :boolean, default: false
-    field :variables_schema, :map
+    field(:name, :string)
+    field(:body, :string)
+    field(:version, :integer, default: 1)
+    field(:is_active, :boolean, default: false)
+    field(:variables_schema, :map)
 
     timestamps(type: :utc_datetime)
   end
@@ -39,32 +39,37 @@ defmodule SferaDoc.Store.Ecto.Record do
   # ---------------------------------------------------------------------------
 
   def active_query(name) do
-    from r in __MODULE__,
+    from(r in __MODULE__,
       where: r.name == ^name and r.is_active == true,
       limit: 1
+    )
   end
 
   def version_query(name, version) do
-    from r in __MODULE__,
+    from(r in __MODULE__,
       where: r.name == ^name and r.version == ^version,
       limit: 1
+    )
   end
 
   def versions_query(name) do
-    from r in __MODULE__,
+    from(r in __MODULE__,
       where: r.name == ^name,
       order_by: [desc: r.version]
+    )
   end
 
   def all_active_query do
-    from r in __MODULE__,
+    from(r in __MODULE__,
       where: r.is_active == true,
       order_by: [asc: r.name]
+    )
   end
 
   def deactivate_query(name) do
-    from r in __MODULE__,
+    from(r in __MODULE__,
       where: r.name == ^name and r.is_active == true
+    )
   end
 
   @doc "Returns the next version number for the given template name."

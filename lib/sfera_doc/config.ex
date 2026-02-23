@@ -31,7 +31,11 @@ defmodule SferaDoc.Config do
 
   # Must be a module attribute so Application.compile_env is called in the
   # module body, not inside a function (which is not allowed).
-  @ecto_table_name Application.compile_env(:sfera_doc, [:store, :table_name], "sfera_doc_templates")
+  @ecto_table_name Application.compile_env(
+                     :sfera_doc,
+                     [:store, :table_name],
+                     "sfera_doc_templates"
+                   )
 
   @doc """
   Returns the Ecto table name for the templates table.

@@ -42,7 +42,10 @@ defmodule SferaDoc.Store.Redis do
   @impl SferaDoc.Store.Adapter
   def worker_spec do
     opts = SferaDoc.Config.redis_config()
-    conn_opts = if is_list(opts), do: Keyword.merge(opts, name: @conn), else: [name: @conn, url: opts]
+
+    conn_opts =
+      if is_list(opts), do: Keyword.merge(opts, name: @conn), else: [name: @conn, url: opts]
+
     Redix.child_spec(conn_opts)
   end
 
@@ -220,11 +223,13 @@ defmodule SferaDoc.Store.Redis do
   defp datetime_to_string(other), do: other
 
   defp parse_datetime(nil), do: nil
+
   defp parse_datetime(str) when is_binary(str) do
     case DateTime.from_iso8601(str) do
       {:ok, dt, _} -> dt
       _ -> nil
     end
   end
+
   defp parse_datetime(other), do: other
 end

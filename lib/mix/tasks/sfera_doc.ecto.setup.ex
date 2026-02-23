@@ -27,10 +27,12 @@ defmodule Mix.Tasks.SferaDoc.Ecto.Setup do
         SferaDoc.Config.ecto_repo()
       rescue
         _ ->
-          Mix.raise("SferaDoc: no Ecto repo configured. Add to your config:\n\n" <>
-            "    config :sfera_doc, :store,\n" <>
-            "      adapter: SferaDoc.Store.Ecto,\n" <>
-            "      repo: MyApp.Repo\n")
+          Mix.raise(
+            "SferaDoc: no Ecto repo configured. Add to your config:\n\n" <>
+              "    config :sfera_doc, :store,\n" <>
+              "      adapter: SferaDoc.Store.Ecto,\n" <>
+              "      repo: MyApp.Repo\n"
+          )
       end
 
     timestamp = Calendar.strftime(DateTime.utc_now(), "%Y%m%d%H%M%S")

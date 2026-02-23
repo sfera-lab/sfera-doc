@@ -78,7 +78,12 @@ defmodule SferaDoc.Cache.RenderedPdf do
   # ---------------------------------------------------------------------------
 
   defp cache_key(name, version, assigns) do
-    hash = assigns |> :erlang.term_to_binary() |> then(&:crypto.hash(:md5, &1)) |> Base.encode16(case: :lower)
+    hash =
+      assigns
+      |> :erlang.term_to_binary()
+      |> then(&:crypto.hash(:md5, &1))
+      |> Base.encode16(case: :lower)
+
     "#{@prefix}:#{name}:#{version}:#{hash}"
   end
 

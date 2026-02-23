@@ -30,18 +30,18 @@ defmodule SferaDoc.Store.Ecto.Migration do
         table_name = SferaDoc.Config.ecto_table_name()
 
         create table(table_name, primary_key: false) do
-          add :id, :binary_id, primary_key: true, default: fragment("gen_random_uuid()")
-          add :name, :string, null: false, size: 255
-          add :body, :text, null: false
-          add :version, :integer, null: false, default: 1
-          add :is_active, :boolean, null: false, default: false
-          add :variables_schema, :map
+          add(:id, :binary_id, primary_key: true, default: fragment("gen_random_uuid()"))
+          add(:name, :string, null: false, size: 255)
+          add(:body, :text, null: false)
+          add(:version, :integer, null: false, default: 1)
+          add(:is_active, :boolean, null: false, default: false)
+          add(:variables_schema, :map)
 
           timestamps(type: :utc_datetime)
         end
 
-        create index(table_name, [:name])
-        create unique_index(table_name, [:name, :version])
+        create(index(table_name, [:name]))
+        create(unique_index(table_name, [:name, :version]))
 
         # Partial unique index: at most one active version per template name.
         # Only created on PostgreSQL; MySQL/SQLite do not support this syntax.
@@ -59,7 +59,7 @@ defmodule SferaDoc.Store.Ecto.Migration do
 
       def down do
         table_name = SferaDoc.Config.ecto_table_name()
-        drop table(table_name)
+        drop(table(table_name))
       end
     end
   end

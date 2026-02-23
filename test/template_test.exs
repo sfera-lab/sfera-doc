@@ -16,7 +16,10 @@ defmodule SferaDoc.TemplateTest do
 
     test "returns missing vars when required vars absent" do
       t = %Template{name: "t", body: "x", variables_schema: %{"required" => ["name", "amount"]}}
-      assert {:error, {:missing_variables, missing}} = Template.validate_variables(t, %{"name" => "Alice"})
+
+      assert {:error, {:missing_variables, missing}} =
+               Template.validate_variables(t, %{"name" => "Alice"})
+
       assert missing == ["amount"]
     end
 
@@ -32,6 +35,7 @@ defmodule SferaDoc.TemplateTest do
         body: "x",
         variables_schema: %{"required" => ["name"], "optional" => ["footer"]}
       }
+
       assert :ok = Template.validate_variables(t, %{"name" => "Alice"})
     end
 

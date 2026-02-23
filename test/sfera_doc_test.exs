@@ -77,11 +77,13 @@ defmodule SferaDocTest do
   end
 
   test "create_template with variables_schema" do
-    {:ok, t} = SferaDoc.create_template(
-      "invoice",
-      "Invoice for {{ customer }}",
-      variables_schema: %{"required" => ["customer"]}
-    )
+    {:ok, t} =
+      SferaDoc.create_template(
+        "invoice",
+        "Invoice for {{ customer }}",
+        variables_schema: %{"required" => ["customer"]}
+      )
+
     assert t.variables_schema == %{"required" => ["customer"]}
   end
 end
