@@ -1,29 +1,29 @@
-defmodule SferaDoc.Store.Ecto do
-  @moduledoc """
-  Ecto-backed storage adapter for SferaDoc.
+if Code.ensure_loaded?(Ecto.Query) do
+  defmodule SferaDoc.Store.Ecto do
+    @moduledoc """
+    Ecto-backed storage adapter for SferaDoc.
 
-  Works with PostgreSQL, MySQL, and SQLite via `ecto_sql`.
+    Works with PostgreSQL, MySQL, and SQLite via `ecto_sql`.
 
-  ## Configuration
+    ## Configuration
 
-      config :sfera_doc, :store,
-        adapter: SferaDoc.Store.Ecto,
-        repo: MyApp.Repo
+        config :sfera_doc, :store,
+          adapter: SferaDoc.Store.Ecto,
+          repo: MyApp.Repo
 
-  The Ecto repo is managed by the host application's supervision tree.
-  SferaDoc does not start or supervise it (`worker_spec/0` returns `nil`).
+    The Ecto repo is managed by the host application's supervision tree.
+    SferaDoc does not start or supervise it (`worker_spec/0` returns `nil`).
 
-  ## Database Setup
+    ## Database Setup
 
-  Add a migration to your app:
+    Add a migration to your app:
 
-      defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
-        use SferaDoc.Store.Ecto.Migration
-      end
+        defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
+          use SferaDoc.Store.Ecto.Migration
+        end
 
-  Or run: `mix sfera_doc.ecto.setup`
-  """
-  if Code.ensure_loaded?(Ecto.Query) do
+    Or run: `mix sfera_doc.ecto.setup`
+    """
     @behaviour SferaDoc.Store.Adapter
 
     alias SferaDoc.Store.Ecto.Record

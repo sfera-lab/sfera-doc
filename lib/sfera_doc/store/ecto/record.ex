@@ -1,8 +1,8 @@
-defmodule SferaDoc.Store.Ecto.Record do
-  @moduledoc false
-  # Internal Ecto schema for the sfera_doc_templates table.
-  # External code should work with SferaDoc.Template structs, not this module.
-  if Code.ensure_loaded?(Ecto.Schema) do
+if Code.ensure_loaded?(Ecto.Adapters.SQL) do
+  defmodule SferaDoc.Store.Ecto.Record do
+    @moduledoc false
+    # Internal Ecto schema for the sfera_doc_templates table.
+    # External code should work with SferaDoc.Template structs, not this module.
     use Ecto.Schema
     import Ecto.Changeset
     import Ecto.Query
