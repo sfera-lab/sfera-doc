@@ -58,23 +58,7 @@ config :sfera_doc, :redis, host: "localhost", port: 6379
 config :sfera_doc, :store, adapter: SferaDoc.Store.ETS
 ```
 
-### 2. Add to your supervision tree
-
-SferaDoc starts its own supervisor (including a Chrome process pool). Add it to your application:
-
-```elixir
-def start(_type, _args) do
-  children = [
-    MyApp.Repo,
-    # other children...
-  ]
-  Supervisor.start_link(children, strategy: :one_for_one)
-end
-```
-
-SferaDoc's supervisor is started automatically via its OTP application callback, no manual entry required.
-
-### 3. Create the database table (Ecto only)
+### 2. Create the database table (Ecto only)
 
 Generate a migration:
 
