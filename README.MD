@@ -1,12 +1,15 @@
-# SferaDoc
+<h1 style="color:#7C3AED; font-weight:400; letter-spacing:0.5px;">
+  <span style="font-weight:700;">Sfera</span>Doc
+</h1>
 
 PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF via Chrome.
 
-- **Template storage** - Liquid templates stored with full version history (Ecto, ETS, or Redis)
-- **Template parsing** - Powered by [`solid`](https://hex.pm/packages/solid); parsed ASTs are cached in ETS
-- **PDF rendering** - HTML rendered by [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based)
-- **PDF storage** - Two-tier: Redis/ETS hot cache + durable object store (S3, Azure Blob, or file system)
-- **Variable validation** - Declare required variables per template and get clear errors before rendering
+## Features
+- **Template storage**: Liquid templates stored with full version history (Ecto, ETS, or Redis)
+- **Template parsing**: Powered by [`solid`](https://hex.pm/packages/solid); parsed ASTs are cached in ETS
+- **PDF rendering**: HTML rendered by [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based)
+- **PDF storage**: Two-tier: Redis/ETS hot cache + durable object store (S3, Azure Blob, or file system)
+- **Variable validation**: Declare required variables per template and get clear errors before rendering
 
 ## Installation
 
@@ -51,7 +54,7 @@ config :sfera_doc, :store,
 config :sfera_doc, :store, adapter: SferaDoc.Store.Redis
 config :sfera_doc, :redis, host: "localhost", port: 6379
 
-# ETS — dev/test only, data is lost on restart
+# ETS: dev/test only, data is lost on restart
 config :sfera_doc, :store, adapter: SferaDoc.Store.ETS
 ```
 
@@ -69,7 +72,7 @@ def start(_type, _args) do
 end
 ```
 
-SferaDoc's supervisor is started automatically via its OTP application callback — no manual entry required.
+SferaDoc's supervisor is started automatically via its OTP application callback, no manual entry required.
 
 ### 3. Create the database table (Ecto only)
 
@@ -213,7 +216,7 @@ config :sfera_doc, :pdf_hot_cache,
 
 ### PDF object store (opt-in)
 
-A durable, persistent tier — the **source of truth** for rendered PDFs. PDFs survive
+A durable, persistent tier, the **source of truth** for rendered PDFs. PDFs survive
 BEAM restarts. On a cache hit the PDF is returned directly and the hot cache is
 populated, avoiding Chrome entirely.
 
@@ -242,13 +245,13 @@ config :sfera_doc, :pdf_object_store,
 
 Both tiers are fully independent. You can use the object store without a hot cache,
 the hot cache without the object store, both together, or neither (generate on every
-request — the original behaviour).
+request, the original behaviour).
 
 ## Storage Backends
 
 | Adapter | Use case |
 |---|---|
-| `SferaDoc.Store.Ecto` | Production — PostgreSQL, MySQL, SQLite |
+| `SferaDoc.Store.Ecto` | Production: PostgreSQL, MySQL, SQLite |
 | `SferaDoc.Store.ETS` | Development and testing only (data lost on restart) |
 | `SferaDoc.Store.Redis` | Distributed / Redis-heavy stacks |
 
@@ -262,6 +265,5 @@ SferaDoc emits the following telemetry events:
 | `[:sfera_doc, :render, :stop]` | `duration` | `template_name` |
 | `[:sfera_doc, :render, :exception]` | `duration` | `template_name`, `error` |
 
-## License
-
-MIT
+ <h1> Made with ❤️ by<span style="font-weight:700; color:#7C3AED; letter-spacing:0.5px;" > Sfera</span>
+</h1>
