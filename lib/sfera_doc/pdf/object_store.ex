@@ -43,7 +43,9 @@ defmodule SferaDoc.Pdf.ObjectStore do
   @spec get(String.t(), pos_integer(), String.t()) :: {:ok, binary()} | :miss
   def get(name, version, hash) do
     case adapter() do
-      nil -> :miss
+      nil ->
+        :miss
+
       mod ->
         case mod.get(name, version, hash) do
           {:ok, binary} -> {:ok, binary}

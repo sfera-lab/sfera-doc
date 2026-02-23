@@ -30,10 +30,17 @@ defmodule SferaDoc.Pdf.ObjectStore.FileSystem do
     path = file_path(name, version, hash)
 
     case File.read(path) do
-      {:ok, binary} -> {:ok, binary}
-      {:error, :enoent} -> :miss
+      {:ok, binary} ->
+        {:ok, binary}
+
+      {:error, :enoent} ->
+        :miss
+
       {:error, reason} ->
-        Logger.warning("SferaDoc.Pdf.ObjectStore.FileSystem: read failed (#{inspect(reason)}) for #{path}")
+        Logger.warning(
+          "SferaDoc.Pdf.ObjectStore.FileSystem: read failed (#{inspect(reason)}) for #{path}"
+        )
+
         :miss
     end
   end
@@ -48,7 +55,10 @@ defmodule SferaDoc.Pdf.ObjectStore.FileSystem do
       :ok
     else
       {:error, reason} ->
-        Logger.warning("SferaDoc.Pdf.ObjectStore.FileSystem: write failed (#{inspect(reason)}) for #{path}")
+        Logger.warning(
+          "SferaDoc.Pdf.ObjectStore.FileSystem: write failed (#{inspect(reason)}) for #{path}"
+        )
+
         {:error, reason}
     end
   end

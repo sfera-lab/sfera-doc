@@ -48,7 +48,9 @@ defmodule SferaDoc.Pdf.HotCache do
   @doc "Returns a child spec if the hot cache is enabled, `nil` otherwise."
   def worker_spec do
     case adapter() do
-      nil -> nil
+      nil ->
+        nil
+
       _ ->
         %{
           id: __MODULE__,
@@ -175,8 +177,13 @@ defmodule SferaDoc.Pdf.HotCache do
 
   defp redis_opts do
     case Application.get_env(:sfera_doc, :pdf_hot_cache, [])[:redis] do
-      nil -> normalize_redis_opts(Application.get_env(:sfera_doc, :redis, host: "localhost", port: 6379))
-      opts -> normalize_redis_opts(opts)
+      nil ->
+        normalize_redis_opts(
+          Application.get_env(:sfera_doc, :redis, host: "localhost", port: 6379)
+        )
+
+      opts ->
+        normalize_redis_opts(opts)
     end
   end
 

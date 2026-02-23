@@ -19,8 +19,7 @@ defmodule SferaDoc.Template do
 
   ## Variable Validation
 
-  Use `validate_variables/2` before rendering to ensure all required variables
-  are present in the assigns map.
+  Use `validate_variables/2` before rendering to ensure all required variables are present in the assigns map.
   """
 
   @enforce_keys [:name, :body]
@@ -48,8 +47,7 @@ defmodule SferaDoc.Template do
         }
 
   @doc """
-  Validates that all required variables from `variables_schema` are present
-  in the `assigns` map.
+  Validates that all required variables from `variables_schema` are presentin the `assigns` map.
 
   Returns `:ok` when:
   - no `variables_schema` is set, or
@@ -68,16 +66,19 @@ defmodule SferaDoc.Template do
       {:error, {:missing_variables, ["name"]}}
   """
   @spec validate_variables(t(), map()) :: :ok | {:error, {:missing_variables, [String.t()]}}
+  def validate_variables(%__MODULE__{}, assigns) when not is_map(assigns) do
+    {:error, :assigns_must_be_map}
+  end
+
   def validate_variables(%__MODULE__{variables_schema: nil}, _assigns), do: :ok
 
   def validate_variables(%__MODULE__{variables_schema: schema}, assigns) do
     required = Map.get(schema, "required", [])
     missing = Enum.reject(required, &Map.has_key?(assigns, &1))
 
-    if missing == [] do
-      :ok
-    else
-      {:error, {:missing_variables, missing}}
+    case missing do
+      [] -> :ok
+      _ -> {:error, {:missing_variables, missing}}
     end
   end
 end

@@ -52,7 +52,10 @@ defmodule SferaDoc.Pdf.ObjectStore.Azure do
         :miss
 
       {:error, reason} ->
-        Logger.warning("SferaDoc.Pdf.ObjectStore.Azure: get failed (#{inspect(reason)}) for #{blob}")
+        Logger.warning(
+          "SferaDoc.Pdf.ObjectStore.Azure: get failed (#{inspect(reason)}) for #{blob}"
+        )
+
         :miss
     end
   end
@@ -69,7 +72,10 @@ defmodule SferaDoc.Pdf.ObjectStore.Azure do
         :ok
 
       {:error, reason} ->
-        Logger.warning("SferaDoc.Pdf.ObjectStore.Azure: put failed (#{inspect(reason)}) for #{blob}")
+        Logger.warning(
+          "SferaDoc.Pdf.ObjectStore.Azure: put failed (#{inspect(reason)}) for #{blob}"
+        )
+
         {:error, reason}
     end
   end
@@ -90,8 +96,11 @@ defmodule SferaDoc.Pdf.ObjectStore.Azure do
     container = Keyword.fetch!(opts, :container)
     base = [container: container]
 
-    credential_keys = [:storage_account_name, :storage_account_key,
-                       :storage_account_connection_string]
+    credential_keys = [
+      :storage_account_name,
+      :storage_account_key,
+      :storage_account_connection_string
+    ]
 
     Enum.reduce(credential_keys, base, fn key, acc ->
       case Keyword.fetch(opts, key) do
