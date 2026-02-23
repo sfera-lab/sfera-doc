@@ -60,20 +60,10 @@ config :sfera_doc, :store, adapter: SferaDoc.Store.ETS
 
 ### 2. Create the database table (Ecto only)
 
-Generate a migration:
+Create a new mgiration, and copy the example migration from [`priv/migrations/create_sfera_doc_templates.exs`](priv/migrations/create_sfera_doc_templates.exs), then run the migration.
 
-```
-mix sfera_doc.ecto.setup
-mix ecto.migrate
-```
 
-Or add the migration manually:
-
-```elixir
-defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
-  use SferaDoc.Store.Ecto.Migration
-end
-```
+The example includes comments for PostgreSQL-specific parts (the `pgcrypto` extension and the partial unique index). Remove those if you are using MySQL or SQLite.
 
 ## Usage
 
