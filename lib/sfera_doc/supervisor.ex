@@ -12,6 +12,8 @@ defmodule SferaDoc.Supervisor do
       [
         SferaDoc.Cache.ParsedTemplate.worker_spec(),
         store_worker_spec(),
+        SferaDoc.Pdf.HotCache.worker_spec(),
+        SferaDoc.Pdf.ObjectStore.worker_spec(),
         chromic_pdf_spec()
       ]
       |> Enum.reject(&is_nil/1)
@@ -35,6 +37,11 @@ defmodule SferaDoc.Supervisor do
 
   defp chromic_pdf_spec do
     opts = SferaDoc.Config.chromic_pdf_opts()
-    {ChromicPDF, opts}
+
+    if Keyword.get(opts, :disabled, false) do
+      nil
+    else
+      {ChromicPDF, Keyword.delete(opts, :disabled)}
+    end
   end
 end

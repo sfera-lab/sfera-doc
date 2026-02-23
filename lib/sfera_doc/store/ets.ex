@@ -85,6 +85,9 @@ defmodule SferaDoc.Store.ETS do
     GenServer.call(__MODULE__, {:delete, name})
   end
 
+  @doc "Clears all entries — test helper only."
+  def reset, do: GenServer.call(__MODULE__, :reset)
+
   # ---------------------------------------------------------------------------
   # GenServer
   # ---------------------------------------------------------------------------
@@ -129,6 +132,11 @@ defmodule SferaDoc.Store.ETS do
     :ets.match_object(@table, {{name, :_}, :_, :_})
     |> Enum.each(fn {key, _v, _t} -> :ets.delete(@table, key) end)
 
+    {:reply, :ok, state}
+  end
+
+  def handle_call(:reset, _from, state) do
+    :ets.delete_all_objects(@table)
     {:reply, :ok, state}
   end
 

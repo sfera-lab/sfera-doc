@@ -47,6 +47,11 @@ defmodule SferaDoc.MixProject do
       # Optional PDF renderer
       {:chromic_pdf, "~> 1.14", optional: true},
 
+      # Optional PDF object-store adapters
+      {:ex_aws, "~> 2.5", optional: true},
+      {:ex_aws_s3, "~> 2.5", optional: true},
+      {:azurex, "~> 1.1", optional: true},
+
       # Dev/test
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]

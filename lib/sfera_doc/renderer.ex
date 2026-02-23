@@ -1,12 +1,13 @@
 defmodule SferaDoc.Renderer do
   @moduledoc false
   # Orchestrates the full rendering pipeline:
-  #   fetch → validate vars → PDF cache? → AST cache/parse → render HTML → render PDF → cache PDF
+  #   fetch → validate vars → hot cache? → object store? → parse → render HTML → render PDF → store
 
   require Logger
 
   alias SferaDoc.{Store, Template}
-  alias SferaDoc.Cache.{ParsedTemplate, RenderedPdf}
+  alias SferaDoc.Cache.ParsedTemplate
+  alias SferaDoc.Pdf.{HotCache, ObjectStore}
 
   @doc """
   Renders a template to a PDF binary.
@@ -60,17 +61,28 @@ defmodule SferaDoc.Renderer do
   end
 
   defp render_or_cached(template, assigns, opts) do
-    case RenderedPdf.get(template.name, template.version, assigns) do
+    hash = assigns_hash(assigns)
+
+    with :miss <- HotCache.get(template.name, template.version, hash),
+         :miss <- object_store_get(template.name, template.version, hash),
+         {:ok, ast} <- get_or_parse(template),
+         {:ok, html} <- render_html(ast, assigns),
+         {:ok, pdf} <- render_pdf(html, opts) do
+      ObjectStore.put(template.name, template.version, hash, pdf)
+      HotCache.put(template.name, template.version, hash, pdf)
+      {:ok, pdf}
+    end
+  end
+
+  # Fetches from object store and populates the hot cache on hit.
+  defp object_store_get(name, version, hash) do
+    case ObjectStore.get(name, version, hash) do
       {:ok, pdf} ->
+        HotCache.put(name, version, hash, pdf)
         {:ok, pdf}
 
       :miss ->
-        with {:ok, ast} <- get_or_parse(template),
-             {:ok, html} <- render_html(ast, assigns),
-             {:ok, pdf} <- render_pdf(html, opts) do
-          RenderedPdf.put(template.name, template.version, assigns, pdf)
-          {:ok, pdf}
-        end
+        :miss
     end
   end
 
@@ -113,5 +125,12 @@ defmodule SferaDoc.Renderer do
       {:ok, pdf} -> {:ok, pdf}
       other -> {:error, {:chromic_pdf_error, other}}
     end
+  end
+
+  defp assigns_hash(assigns) do
+    assigns
+    |> :erlang.term_to_binary()
+    |> then(&:crypto.hash(:md5, &1))
+    |> Base.encode16(case: :lower)
   end
 end

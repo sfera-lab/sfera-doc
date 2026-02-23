@@ -9,7 +9,7 @@ defmodule SferaDocTest do
 
     case Process.whereis(SferaDoc.Store.ETS) do
       nil -> start_supervised!(SferaDoc.Store.ETS)
-      _pid -> :ets.delete_all_objects(:sfera_doc_store_ets)
+      _pid -> SferaDoc.Store.ETS.reset()
     end
 
     :ok

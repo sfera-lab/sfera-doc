@@ -20,8 +20,9 @@ defmodule SferaDoc.Config do
   - `:redis` — Redis connection options (host, port, url, etc.)
   - `:cache, :enabled` — whether to cache parsed template ASTs (default: `true`)
   - `:cache, :ttl` — AST cache TTL in seconds (default: `300`)
-  - `:pdf_cache, :enabled` — whether to cache rendered PDFs in Redis (default: `false`)
-  - `:pdf_cache, :ttl` — PDF cache TTL in seconds (default: `60`)
+  - `:pdf_hot_cache, :adapter` — PDF hot-cache backend (`:redis` or `:ets`, default: disabled)
+  - `:pdf_hot_cache, :ttl` — hot-cache TTL in seconds (default: `60`)
+  - `:pdf_object_store, :adapter` — PDF object-store adapter module (default: disabled)
   - `:chromic_pdf` — options passed directly to `ChromicPDF` (default: `[]`)
   """
 
@@ -110,17 +111,31 @@ defmodule SferaDoc.Config do
   end
 
   # ---------------------------------------------------------------------------
-  # Runtime: PDF cache
+  # Runtime: PDF hot cache
   # ---------------------------------------------------------------------------
 
-  @doc "Returns `true` if the rendered-PDF Redis cache is enabled (default: `false`)."
-  def pdf_cache_enabled? do
-    Application.get_env(:sfera_doc, :pdf_cache, []) |> Keyword.get(:enabled, false)
+  @doc "Returns the PDF hot-cache adapter — `:redis`, `:ets`, or `nil` (disabled)."
+  def pdf_hot_cache_adapter do
+    Application.get_env(:sfera_doc, :pdf_hot_cache, [])[:adapter]
   end
 
-  @doc "Returns the PDF cache TTL in seconds (default: `60`)."
-  def pdf_cache_ttl do
-    Application.get_env(:sfera_doc, :pdf_cache, []) |> Keyword.get(:ttl, 60)
+  @doc "Returns the PDF hot-cache TTL in seconds (default: `60`)."
+  def pdf_hot_cache_ttl do
+    Application.get_env(:sfera_doc, :pdf_hot_cache, []) |> Keyword.get(:ttl, 60)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Runtime: PDF object store
+  # ---------------------------------------------------------------------------
+
+  @doc "Returns the PDF object-store adapter module, or `nil` if not configured."
+  def pdf_object_store_adapter do
+    Application.get_env(:sfera_doc, :pdf_object_store, [])[:adapter]
+  end
+
+  @doc "Returns the PDF object-store options keyword list."
+  def pdf_object_store_opts do
+    Application.get_env(:sfera_doc, :pdf_object_store, [])
   end
 
   # ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ PDF generation library for Elixir. Store versioned [Liquid](https://shopify.gith
 - **Template storage** — Liquid templates stored with full version history (Ecto, ETS, or Redis)
 - **Template parsing** — Powered by [`solid`](https://hex.pm/packages/solid); parsed ASTs are cached in ETS
 - **PDF rendering** — HTML rendered by [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based)
+- **PDF storage** — Two-tier: Redis/ETS hot cache + durable object store (S3, Azure Blob, or file system)
 - **Variable validation** — Declare required variables per template and get clear errors before rendering
 
 ## Installation
@@ -22,7 +23,14 @@ def deps do
     {:redix, "~> 1.1"},
 
     # Required for PDF rendering
-    {:chromic_pdf, "~> 1.14"}
+    {:chromic_pdf, "~> 1.14"},
+
+    # Required if using the S3 PDF object store
+    {:ex_aws, "~> 2.5"},
+    {:ex_aws_s3, "~> 2.5"},
+
+    # Required if using the Azure Blob PDF object store
+    {:azurex, "~> 1.1"}
   ]
 end
 ```
@@ -183,20 +191,58 @@ config :sfera_doc, :chromic_pdf,
   session_pool: [size: 2, timeout: 10_000]
 ```
 
-### PDF output cache (opt-in)
+### PDF hot cache (opt-in)
+
+A fast, ephemeral front-tier cache. Repeat requests with identical variables are
+served from Redis or ETS without touching the object store or Chrome.
 
 ```elixir
-config :sfera_doc, :pdf_cache,
-  enabled: true,
-  ttl: 60
+# Redis (distributed, recommended for multi-node)
+config :sfera_doc, :pdf_hot_cache,
+  adapter: :redis,
+  ttl: 60          # seconds
+
+# ETS (single-node, zero external deps)
+config :sfera_doc, :pdf_hot_cache,
+  adapter: :ets,
+  ttl: 300
 ```
 
-> **Warning:** PDFs can be 100 KB – 10 MB or more. Only enable the PDF cache when:
-> - Your PDFs are small and frequently re-requested with identical variables
-> - Redis `maxmemory-policy` is set to `allkeys-lru`
-> - An explicit TTL is configured
->
-> Requires the Redis storage adapter. ETS is intentionally not supported for PDF caching.
+> **Warning:** PDFs can be 100 KB – 10 MB or more. Keep TTLs short and monitor memory.
+> For Redis, set `maxmemory-policy allkeys-lru`.
+
+### PDF object store (opt-in)
+
+A durable, persistent tier — the **source of truth** for rendered PDFs. PDFs survive
+BEAM restarts. On a cache hit the PDF is returned directly and the hot cache is
+populated, avoiding Chrome entirely.
+
+```elixir
+# Amazon S3 (requires :ex_aws and :ex_aws_s3)
+config :sfera_doc, :pdf_object_store,
+  adapter: SferaDoc.Pdf.ObjectStore.S3,
+  bucket: "my-pdfs",
+  prefix: "sfera_doc/"   # optional
+
+# Azure Blob Storage (requires :azurex)
+config :sfera_doc, :pdf_object_store,
+  adapter: SferaDoc.Pdf.ObjectStore.Azure,
+  container: "my-pdfs"
+
+# azurex credentials (can also be passed inline in the config above)
+config :azurex, Azurex.Blob.Config,
+  storage_account_name: "mystorageaccount",
+  storage_account_key: "base64encodedkey=="
+
+# Local / shared file system (no extra deps)
+config :sfera_doc, :pdf_object_store,
+  adapter: SferaDoc.Pdf.ObjectStore.FileSystem,
+  path: "/var/data/pdfs"
+```
+
+Both tiers are fully independent. You can use the object store without a hot cache,
+the hot cache without the object store, both together, or neither (generate on every
+request — the original behaviour).
 
 ## Storage Backends
 
