@@ -23,6 +23,8 @@ defmodule SferaDoc.Store.Ecto do
 
   Or run: `mix sfera_doc.ecto.setup`
   """
+  if Code.ensure_loaded?(Ecto.Query) do
+
 
   @behaviour SferaDoc.Store.Adapter
 
@@ -174,4 +176,6 @@ defmodule SferaDoc.Store.Ecto do
   rescue
     e -> {:error, e}
   end
+
+end
 end
