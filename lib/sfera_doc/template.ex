@@ -47,7 +47,7 @@ defmodule SferaDoc.Template do
         }
 
   @doc """
-  Validates that all required variables from `variables_schema` are presentin the `assigns` map.
+  Validates that all required variables from `variables_schema` are present in the `assigns` map.
 
   Returns `:ok` when:
   - no `variables_schema` is set, or
@@ -65,7 +65,8 @@ defmodule SferaDoc.Template do
       iex> SferaDoc.Template.validate_variables(t, %{})
       {:error, {:missing_variables, ["name"]}}
   """
-  @spec validate_variables(t(), map()) :: :ok | {:error, {:missing_variables, [String.t()]}}
+  @spec validate_variables(t(), map()) ::
+          :ok | {:error, {:missing_variables, [String.t()]}} | {:error, :assigns_must_be_map}
   def validate_variables(%__MODULE__{}, assigns) when not is_map(assigns) do
     {:error, :assigns_must_be_map}
   end

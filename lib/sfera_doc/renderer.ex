@@ -3,11 +3,10 @@ defmodule SferaDoc.Renderer do
   # Orchestrates the full rendering pipeline:
   #   fetch → validate vars → hot cache? → object store? → parse → render HTML → render PDF → store
 
-  require Logger
-
   alias SferaDoc.{Store, Template}
   alias SferaDoc.Cache.ParsedTemplate
   alias SferaDoc.Pdf.{HotCache, ObjectStore}
+  alias SferaDoc.TemplateEngine
 
   @doc """
   Renders a template to a PDF binary.
@@ -92,29 +91,19 @@ defmodule SferaDoc.Renderer do
         {:ok, ast}
 
       :miss ->
-        case Solid.parse(template.body) do
+        case TemplateEngine.Solid.parse(template.body) do
           {:ok, ast} ->
             ParsedTemplate.put(template.name, template.version, ast)
             {:ok, ast}
 
-          {:error, %Solid.TemplateError{} = error} ->
-            {:error, {:template_parse_error, error}}
+          {:error, _} = error ->
+            error
         end
     end
   end
 
   defp render_html(ast, assigns) do
-    case Solid.render(ast, assigns) do
-      {:ok, iolist, []} ->
-        {:ok, IO.iodata_to_binary(iolist)}
-
-      {:ok, iolist, warnings} ->
-        Logger.warning("SferaDoc: template rendering warnings: #{inspect(warnings)}")
-        {:ok, IO.iodata_to_binary(iolist)}
-
-      {:error, errors, partial_iolist} ->
-        {:error, {:template_render_error, errors, IO.iodata_to_binary(partial_iolist)}}
-    end
+    TemplateEngine.Solid.render(ast, assigns)
   end
 
   defp render_pdf(html, opts) do
@@ -122,7 +111,7 @@ defmodule SferaDoc.Renderer do
     pdf_opts = Keyword.merge([output: :binary], extra_opts)
 
     case ChromicPDF.print_to_pdf({:html, html}, pdf_opts) do
-      {:ok, pdf} -> {:ok, pdf}
+      {:ok, _} = ok -> ok
       other -> {:error, {:chromic_pdf_error, other}}
     end
   end
