@@ -166,6 +166,14 @@ config :sfera_doc, :cache,
 # ChromicPDF options (passed through to ChromicPDF supervisor)
 config :sfera_doc, :chromic_pdf,
   session_pool: [size: 2, timeout: 10_000]
+
+# Template engine adapter (defaults to Solid)
+config :sfera_doc, :template_engine,
+  adapter: SferaDoc.TemplateEngine.Solid
+
+# PDF engine adapter (defaults to ChromicPDF)
+config :sfera_doc, :pdf_engine,
+  adapter: SferaDoc.PdfEngine.ChromicPDF
 ```
 
 ### PDF hot cache (opt-in)

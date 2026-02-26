@@ -3,11 +3,10 @@ defmodule SferaDoc.Renderer do
   # Orchestrates the full rendering pipeline:
   #   fetch → validate vars → hot cache? → object store? → parse → render HTML → render PDF → store
 
-  require Logger
-
   alias SferaDoc.{Store, Template}
   alias SferaDoc.Cache.ParsedTemplate
   alias SferaDoc.Pdf.{HotCache, ObjectStore}
+  alias SferaDoc.{PdfEngine, TemplateEngine}
 
   @doc """
   Renders a template to a PDF binary.
@@ -92,39 +91,34 @@ defmodule SferaDoc.Renderer do
         {:ok, ast}
 
       :miss ->
-        case Solid.parse(template.body) do
+        case TemplateEngine.parse(template.body) do
           {:ok, ast} ->
             ParsedTemplate.put(template.name, template.version, ast)
             {:ok, ast}
 
-          {:error, %Solid.TemplateError{} = error} ->
+          {:error, error} ->
             {:error, {:template_parse_error, error}}
         end
     end
   end
 
   defp render_html(ast, assigns) do
-    case Solid.render(ast, assigns) do
-      {:ok, iolist, []} ->
-        {:ok, IO.iodata_to_binary(iolist)}
+    case TemplateEngine.render(ast, assigns) do
+      {:ok, html} ->
+        {:ok, html}
 
-      {:ok, iolist, warnings} ->
-        Logger.warning("SferaDoc: template rendering warnings: #{inspect(warnings)}")
-        {:ok, IO.iodata_to_binary(iolist)}
+      {:error, {errors, partial_html}} ->
+        {:error, {:template_render_error, errors, partial_html}}
 
-      {:error, errors, partial_iolist} ->
-        {:error, {:template_render_error, errors, IO.iodata_to_binary(partial_iolist)}}
+      {:error, error} ->
+        {:error, {:template_render_error, error}}
     end
   end
 
   defp render_pdf(html, opts) do
     extra_opts = Keyword.get(opts, :chromic_pdf, [])
     pdf_opts = Keyword.merge([output: :binary], extra_opts)
-
-    case ChromicPDF.print_to_pdf({:html, html}, pdf_opts) do
-      {:ok, pdf} -> {:ok, pdf}
-      other -> {:error, {:chromic_pdf_error, other}}
-    end
+    PdfEngine.render(html, pdf_opts)
   end
 
   defp assigns_hash(assigns) do
