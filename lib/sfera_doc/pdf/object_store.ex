@@ -30,6 +30,7 @@ defmodule SferaDoc.Pdf.ObjectStore do
   Returns a child spec for the configured adapter, or `nil` if no adapter is
   configured or the adapter does not require a supervised process.
   """
+  @spec worker_spec() :: Supervisor.child_spec() | nil
   def worker_spec do
     case adapter() do
       nil -> nil
@@ -48,7 +49,7 @@ defmodule SferaDoc.Pdf.ObjectStore do
 
       mod ->
         case mod.get(name, version, hash) do
-          {:ok, binary} -> {:ok, binary}
+          {:ok, _} = ok -> ok
           :miss -> :miss
           {:error, _} -> :miss
         end

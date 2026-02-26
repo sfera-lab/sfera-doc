@@ -40,8 +40,8 @@ defmodule SferaDoc.Pdf.ObjectStore.Azure do
   @impl true
   def get(name, version, hash) do
     ensure_deps!()
-    blob = blob_name(name, version, hash)
     opts = Application.get_env(:sfera_doc, :pdf_object_store, [])
+    blob = blob_name(name, version, hash, opts)
     azurex_opts = azurex_opts(opts)
 
     case apply(Azurex.Blob, :get_blob, [blob, azurex_opts]) do
@@ -63,8 +63,8 @@ defmodule SferaDoc.Pdf.ObjectStore.Azure do
   @impl true
   def put(name, version, hash, binary) do
     ensure_deps!()
-    blob = blob_name(name, version, hash)
     opts = Application.get_env(:sfera_doc, :pdf_object_store, [])
+    blob = blob_name(name, version, hash, opts)
     azurex_opts = azurex_opts(opts)
 
     case apply(Azurex.Blob, :put_blob, [blob, binary, "application/pdf", azurex_opts]) do
@@ -84,8 +84,7 @@ defmodule SferaDoc.Pdf.ObjectStore.Azure do
   # Private
   # ---------------------------------------------------------------------------
 
-  defp blob_name(name, version, hash) do
-    opts = Application.get_env(:sfera_doc, :pdf_object_store, [])
+  defp blob_name(name, version, hash, opts) do
     prefix = Keyword.get(opts, :prefix, "")
     "#{prefix}#{name}/#{version}/#{hash}.pdf"
   end
