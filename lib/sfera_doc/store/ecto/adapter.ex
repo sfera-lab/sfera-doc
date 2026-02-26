@@ -1,5 +1,5 @@
 cond do
-  Code.ensure_loaded?(Ecto.Query) ->
+  Code.ensure_loaded?(Ecto) ->
     defmodule SferaDoc.Store.Ecto do
       @moduledoc """
       Ecto-backed storage adapter for SferaDoc.
@@ -31,38 +31,27 @@ cond do
       alias SferaDoc.{Config, Template}
       import Ecto.Query
 
-      # ---------------------------------------------------------------------------
-      # worker_spec/0
-      # ---------------------------------------------------------------------------
+      # Returns the configured Ecto repo at runtime, supporting hot reloads.
+      # Raises RuntimeError if `:repo` is not configured (surfaces at call time,
+      # not at startup — see Config.ecto_repo/0 for details).
+      defp repo, do: Config.ecto_repo()
 
       @impl SferaDoc.Store.Adapter
       def worker_spec, do: nil
 
-      # ---------------------------------------------------------------------------
-      # get/1
-      # ---------------------------------------------------------------------------
-
       @impl SferaDoc.Store.Adapter
       def get(name) do
-        repo = Config.ecto_repo()
-
-        case repo.one(Record.active_query(name)) do
+        case repo().one(Record.active_query(name)) do
           nil -> {:error, :not_found}
           record -> {:ok, Record.to_template(record)}
         end
       rescue
         e -> {:error, e}
       end
-
-      # ---------------------------------------------------------------------------
-      # get_version/2
-      # ---------------------------------------------------------------------------
 
       @impl SferaDoc.Store.Adapter
       def get_version(name, version) do
-        repo = Config.ecto_repo()
-
-        case repo.one(Record.version_query(name, version)) do
+        case repo().one(Record.version_query(name, version)) do
           nil -> {:error, :not_found}
           record -> {:ok, Record.to_template(record)}
         end
@@ -70,14 +59,15 @@ cond do
         e -> {:error, e}
       end
 
-      # ---------------------------------------------------------------------------
-      # put/1
-      # ---------------------------------------------------------------------------
-
       @impl SferaDoc.Store.Adapter
       def put(%Template{} = template) do
-        repo = Config.ecto_repo()
-
+        # NOTE: `next_version` is computed via SELECT MAX(version) inside the
+        # Multi, without a row lock. Under concurrent `put` calls for the same
+        # name, two transactions may compute the same version and then conflict
+        # on the unique_constraint([:name, :version]). This surfaces as
+        # `{:error, {:validation, %Ecto.Changeset{}}}` with a uniqueness error.
+        # Callers that need strict ordering under high concurrency should
+        # implement their own retry logic or use a database-level sequence.
         Ecto.Multi.new()
         |> Ecto.Multi.run(:next_version, fn repo, _changes ->
           {:ok, Record.next_version(repo, template.name)}
@@ -96,47 +86,32 @@ cond do
             variables_schema: template.variables_schema
           })
         end)
-        |> repo.transaction()
+        |> repo().transaction()
         |> case do
           {:ok, %{insert: record}} -> {:ok, Record.to_template(record)}
+          {:error, _op, %Ecto.Changeset{} = cs, _changes} -> {:error, {:validation, cs}}
           {:error, _op, reason, _changes} -> {:error, reason}
         end
       rescue
         e -> {:error, e}
       end
 
-      # ---------------------------------------------------------------------------
-      # list/0
-      # ---------------------------------------------------------------------------
-
       @impl SferaDoc.Store.Adapter
       def list do
-        repo = Config.ecto_repo()
-        {:ok, repo.all(Record.all_active_query()) |> Enum.map(&Record.to_template/1)}
+        {:ok, repo().all(Record.all_active_query()) |> Enum.map(&Record.to_template/1)}
       rescue
         e -> {:error, e}
       end
-
-      # ---------------------------------------------------------------------------
-      # list_versions/1
-      # ---------------------------------------------------------------------------
 
       @impl SferaDoc.Store.Adapter
       def list_versions(name) do
-        repo = Config.ecto_repo()
-        {:ok, repo.all(Record.versions_query(name)) |> Enum.map(&Record.to_template/1)}
+        {:ok, repo().all(Record.versions_query(name)) |> Enum.map(&Record.to_template/1)}
       rescue
         e -> {:error, e}
       end
 
-      # ---------------------------------------------------------------------------
-      # activate_version/2
-      # ---------------------------------------------------------------------------
-
       @impl SferaDoc.Store.Adapter
       def activate_version(name, version) do
-        repo = Config.ecto_repo()
-
         Ecto.Multi.new()
         |> Ecto.Multi.one(:target, Record.version_query(name, version))
         |> Ecto.Multi.run(:check_exists, fn _repo, %{target: target} ->
@@ -150,10 +125,15 @@ cond do
           Record.deactivate_query(name),
           set: [is_active: false]
         )
+        # NOTE: `target` was fetched before `:deactivate` ran. If `target` was
+        # the currently active record, its `is_active` field is stale (true in
+        # the struct, false in the DB after deactivate). The changeset below
+        # explicitly sets `is_active: true`, which is the intended final state,
+        # so correctness is maintained regardless of the stale field.
         |> Ecto.Multi.update(:activate, fn %{target: target} ->
           Record.changeset(target, %{is_active: true})
         end)
-        |> repo.transaction()
+        |> repo().transaction()
         |> case do
           {:ok, %{activate: record}} -> {:ok, Record.to_template(record)}
           {:error, :check_exists, :not_found, _} -> {:error, :not_found}
@@ -163,16 +143,12 @@ cond do
         e -> {:error, e}
       end
 
-      # ---------------------------------------------------------------------------
-      # delete/1
-      # ---------------------------------------------------------------------------
-
       @impl SferaDoc.Store.Adapter
+      # Delete is idempotent: returns :ok even if no rows were deleted.
+      # This matches the Adapter callback contract (:ok | {:error, reason()}).
       def delete(name) do
-        repo = Config.ecto_repo()
-
         from(r in Record, where: r.name == ^name)
-        |> repo.delete_all()
+        |> repo().delete_all()
 
         :ok
       rescue
