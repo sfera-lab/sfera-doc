@@ -25,12 +25,20 @@ defmodule SferaDocTest do
   end
 
   test "update_template creates a new version" do
-    SferaDoc.create_template("doc", "v1")
+    {:ok, _v1} = SferaDoc.create_template("doc", "v1")
     {:ok, v2} = SferaDoc.update_template("doc", "v2")
     assert v2.version == 2
 
     {:ok, active} = SferaDoc.get_template("doc")
     assert active.body == "v2"
+  end
+
+  test "update_template deactivates previous version" do
+    {:ok, _v1} = SferaDoc.create_template("doc", "v1")
+    {:ok, _v2} = SferaDoc.update_template("doc", "v2")
+
+    {:ok, v1} = SferaDoc.get_template("doc", version: 1)
+    assert v1.is_active == false
   end
 
   test "get_template with version option" do
@@ -41,14 +49,28 @@ defmodule SferaDocTest do
     assert v1.body == "v1"
   end
 
+  test "get_template returns :not_found for missing template" do
+    assert {:error, :not_found} = SferaDoc.get_template("nonexistent")
+  end
+
   test "list_templates returns active versions" do
     SferaDoc.create_template("a", "a")
     SferaDoc.create_template("b", "b")
 
     {:ok, templates} = SferaDoc.list_templates()
     names = Enum.map(templates, & &1.name)
+    assert length(templates) == 2
     assert "a" in names
     assert "b" in names
+  end
+
+  test "list_templates returns one entry per name after updates" do
+    SferaDoc.create_template("doc", "v1")
+    SferaDoc.update_template("doc", "v2")
+
+    {:ok, templates} = SferaDoc.list_templates()
+    assert length(templates) == 1
+    assert hd(templates).body == "v2"
   end
 
   test "list_versions returns all versions" do
@@ -57,6 +79,11 @@ defmodule SferaDocTest do
 
     {:ok, versions} = SferaDoc.list_versions("doc")
     assert length(versions) == 2
+  end
+
+  test "list_versions returns empty list for unknown template" do
+    {:ok, versions} = SferaDoc.list_versions("nonexistent")
+    assert versions == []
   end
 
   test "activate_version rolls back to previous version" do
@@ -69,11 +96,35 @@ defmodule SferaDocTest do
     assert active.body == "v1"
   end
 
+  test "activate_version deactivates previously active version" do
+    SferaDoc.create_template("doc", "v1")
+    SferaDoc.update_template("doc", "v2")
+
+    SferaDoc.activate_version("doc", 1)
+
+    {:ok, v2} = SferaDoc.get_template("doc", version: 2)
+    assert v2.is_active == false
+  end
+
+  test "activate_version returns :not_found for unknown version" do
+    SferaDoc.create_template("doc", "v1")
+    assert {:error, :not_found} = SferaDoc.activate_version("doc", 99)
+  end
+
   test "delete_template removes template" do
     SferaDoc.create_template("temp", "body")
     :ok = SferaDoc.delete_template("temp")
 
     assert {:error, :not_found} = SferaDoc.get_template("temp")
+  end
+
+  test "delete_template removes all versions" do
+    SferaDoc.create_template("doc", "v1")
+    SferaDoc.update_template("doc", "v2")
+    :ok = SferaDoc.delete_template("doc")
+
+    {:ok, versions} = SferaDoc.list_versions("doc")
+    assert versions == []
   end
 
   test "create_template with variables_schema" do
@@ -85,5 +136,14 @@ defmodule SferaDocTest do
       )
 
     assert t.variables_schema == %{"required" => ["customer"]}
+  end
+
+  test "update_template accepts variables_schema" do
+    SferaDoc.create_template("doc", "v1", variables_schema: %{"required" => ["name"]})
+
+    {:ok, v2} =
+      SferaDoc.update_template("doc", "v2", variables_schema: %{"required" => ["name", "date"]})
+
+    assert v2.variables_schema == %{"required" => ["name", "date"]}
   end
 end
