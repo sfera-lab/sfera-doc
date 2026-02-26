@@ -2,7 +2,7 @@ defmodule SferaDoc.MixProject do
   use Mix.Project
 
   @version "0.0.1"
-  @source_url "https://github.com/sfera/sfera_doc"
+  @source_url "https://github.com/sfera-lab/sfera-doc"
 
   def project do
     [
