@@ -168,22 +168,17 @@ defmodule SferaDoc.Pdf.HotCache do
   # ---------------------------------------------------------------------------
 
   defp adapter do
-    Application.get_env(:sfera_doc, :pdf_hot_cache, [])[:adapter]
+    SferaDoc.Config.pdf_hot_cache_adapter()
   end
 
   defp hot_cache_ttl do
-    Application.get_env(:sfera_doc, :pdf_hot_cache, []) |> Keyword.get(:ttl, 60)
+    SferaDoc.Config.pdf_hot_cache_ttl()
   end
 
   defp redis_opts do
     case Application.get_env(:sfera_doc, :pdf_hot_cache, [])[:redis] do
-      nil ->
-        normalize_redis_opts(
-          Application.get_env(:sfera_doc, :redis, host: "localhost", port: 6379)
-        )
-
-      opts ->
-        normalize_redis_opts(opts)
+      nil -> normalize_redis_opts(SferaDoc.Config.redis_config())
+      opts -> normalize_redis_opts(opts)
     end
   end
 
