@@ -30,17 +30,13 @@ defmodule SferaDoc.Cache.ParsedTemplate do
 
   @doc "Returns a child spec for the supervisor, or `nil` if caching is disabled."
   def worker_spec do
-    cond do
-      SferaDoc.Config.cache_enabled?() ->
-        %{
-          id: __MODULE__,
-          start: {__MODULE__, :start_link, []},
-          type: :worker,
-          restart: :permanent
-        }
-
-      true ->
-        nil
+    if SferaDoc.Config.cache_enabled?() do
+      %{
+        id: __MODULE__,
+        start: {__MODULE__, :start_link, []},
+        type: :worker,
+        restart: :permanent
+      }
     end
   end
 
@@ -50,41 +46,42 @@ defmodule SferaDoc.Cache.ParsedTemplate do
 
   @doc """
   Returns `{:ok, ast}` on cache hit within TTL, `:miss` otherwise.
+  Returns `:miss` immediately when caching is disabled.
   Reads ETS directly, no GenServer call overhead.
   """
   @spec get(String.t(), pos_integer()) :: {:ok, term()} | :miss
   def get(name, version) do
-    ttl = SferaDoc.Config.cache_ttl()
-    now = System.monotonic_time(:second)
-    key = {name, version}
+    if SferaDoc.Config.cache_enabled?() do
+      ttl = SferaDoc.Config.cache_ttl()
+      now = System.monotonic_time(:second)
+      key = {name, version}
 
-    case :ets.lookup(@table, key) do
-      [{^key, ast, stored_at}] when now - stored_at < ttl -> {:ok, ast}
-      _ -> :miss
+      case :ets.lookup(@table, key) do
+        [{^key, ast, stored_at}] when now - stored_at < ttl -> {:ok, ast}
+        _ -> :miss
+      end
+    else
+      :miss
     end
   end
 
   @doc "Stores a parsed AST in the cache. Serialized through GenServer."
   @spec put(String.t(), pos_integer(), term()) :: :ok
   def put(name, version, ast) do
-    cond do
-      SferaDoc.Config.cache_enabled?() ->
-        GenServer.call(__MODULE__, {:put, name, version, ast})
-
-      true ->
-        :ok
+    if SferaDoc.Config.cache_enabled?() do
+      GenServer.call(__MODULE__, {:put, name, version, ast})
+    else
+      :ok
     end
   end
 
   @doc "Removes a specific `{name, version}` entry from the cache."
   @spec invalidate(String.t(), pos_integer()) :: :ok
   def invalidate(name, version) do
-    cond do
-      SferaDoc.Config.cache_enabled?() ->
-        GenServer.call(__MODULE__, {:invalidate, name, version})
-
-      true ->
-        :ok
+    if SferaDoc.Config.cache_enabled?() do
+      GenServer.call(__MODULE__, {:invalidate, name, version})
+    else
+      :ok
     end
   end
 
@@ -108,6 +105,7 @@ defmodule SferaDoc.Cache.ParsedTemplate do
     {:reply, :ok, state}
   end
 
+  @impl GenServer
   def handle_call({:invalidate, name, version}, _from, state) do
     :ets.delete(@table, {name, version})
     {:reply, :ok, state}
