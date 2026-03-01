@@ -37,9 +37,12 @@ defmodule SferaDoc.Pdf.HotCache do
 
   use GenServer
 
+  require Logger
+
   @redis_conn __MODULE__
   @ets_table :sfera_doc_pdf_hot_cache
   @redis_prefix "sfera_doc:pdf"
+  @sweep_interval_ms 60_000
 
   # ---------------------------------------------------------------------------
   # Supervisor integration
@@ -101,7 +104,8 @@ defmodule SferaDoc.Pdf.HotCache do
 
   @impl GenServer
   def init(:ets) do
-    :ets.new(@ets_table, [:set, :protected, :named_table, read_concurrency: true])
+    :ets.new(@ets_table, [:set, :public, :named_table, read_concurrency: true, write_concurrency: true])
+    schedule_sweep()
     {:ok, :ets}
   end
 
@@ -112,11 +116,13 @@ defmodule SferaDoc.Pdf.HotCache do
   end
 
   @impl GenServer
-  def handle_call({:ets_put, name, version, hash, binary}, _from, state) do
-    now = System.monotonic_time(:second)
-    :ets.insert(@ets_table, {{name, version, hash}, binary, now})
-    {:reply, :ok, state}
+  def handle_info(:sweep, :ets = state) do
+    evict_expired()
+    schedule_sweep()
+    {:noreply, state}
   end
+
+  def handle_info(_msg, state), do: {:noreply, state}
 
   # ---------------------------------------------------------------------------
   # Redis helpers
@@ -128,7 +134,9 @@ defmodule SferaDoc.Pdf.HotCache do
     case Redix.command(@redis_conn, ["GET", key]) do
       {:ok, nil} -> :miss
       {:ok, binary} -> {:ok, binary}
-      {:error, _} -> :miss
+      {:error, reason} ->
+        Logger.warning("SferaDoc.Pdf.HotCache: Redis get failed for #{key}: #{inspect(reason)}")
+        :miss
     end
   end
 
@@ -138,7 +146,9 @@ defmodule SferaDoc.Pdf.HotCache do
 
     case Redix.command(@redis_conn, ["SET", key, binary, "EX", ttl]) do
       {:ok, _} -> :ok
-      {:error, _} -> :ok
+      {:error, reason} ->
+        Logger.warning("SferaDoc.Pdf.HotCache: Redis put failed for #{key}: #{inspect(reason)}")
+        :ok
     end
   end
 
@@ -160,7 +170,26 @@ defmodule SferaDoc.Pdf.HotCache do
   end
 
   defp ets_put(name, version, hash, binary) do
-    GenServer.call(__MODULE__, {:ets_put, name, version, hash, binary})
+    now = System.monotonic_time(:second)
+    :ets.insert(@ets_table, {{name, version, hash}, binary, now})
+    :ok
+  end
+
+  defp evict_expired do
+    ttl = hot_cache_ttl()
+    now = System.monotonic_time(:second)
+
+    :ets.select_delete(@ets_table, [
+      {
+        {:_, :_, :"$1"},
+        [{:>=, {:-, {:const, now}, :"$1"}, {:const, ttl}}],
+        [true]
+      }
+    ])
+  end
+
+  defp schedule_sweep do
+    Process.send_after(self(), :sweep, @sweep_interval_ms)
   end
 
   # ---------------------------------------------------------------------------
@@ -168,22 +197,17 @@ defmodule SferaDoc.Pdf.HotCache do
   # ---------------------------------------------------------------------------
 
   defp adapter do
-    Application.get_env(:sfera_doc, :pdf_hot_cache, [])[:adapter]
+    SferaDoc.Config.pdf_hot_cache_adapter()
   end
 
   defp hot_cache_ttl do
-    Application.get_env(:sfera_doc, :pdf_hot_cache, []) |> Keyword.get(:ttl, 60)
+    SferaDoc.Config.pdf_hot_cache_ttl()
   end
 
   defp redis_opts do
     case Application.get_env(:sfera_doc, :pdf_hot_cache, [])[:redis] do
-      nil ->
-        normalize_redis_opts(
-          Application.get_env(:sfera_doc, :redis, host: "localhost", port: 6379)
-        )
-
-      opts ->
-        normalize_redis_opts(opts)
+      nil -> normalize_redis_opts(SferaDoc.Config.redis_config())
+      opts -> normalize_redis_opts(opts)
     end
   end
 

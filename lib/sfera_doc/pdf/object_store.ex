@@ -85,6 +85,6 @@ defmodule SferaDoc.Pdf.ObjectStore do
   # ---------------------------------------------------------------------------
 
   defp adapter do
-    Application.get_env(:sfera_doc, :pdf_object_store, [])[:adapter]
+    SferaDoc.Config.pdf_object_store_adapter()
   end
 end
