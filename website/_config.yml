@@ -1,0 +1,51 @@
+title: "SferaDoc"
+
+description: "SferaDoc is an extensible Elixir library for generating PDFs."
+url: "https://www.sferadoc.xyz"
+baseurl: ""
+github_url: "https://github.com/sfera-lab/sfera_doc"
+hex_url: "https://hex.pm/packages/sfera_doc"
+
+author:
+  name: "Andre' Vella"
+  email: "andimongh@proton.me"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /docs/:title/
+
+# Include files and directories
+include:
+  - content
+
+# Exclude from processing
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "doc"
+  - scope:
+      path: ""
+    values:
+      layout: "default"
