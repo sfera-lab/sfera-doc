@@ -1,0 +1,42 @@
+---
+layout: default
+---
+
+<div class="doc-layout">
+    <aside class="doc-sidebar d-none d-lg-block">
+        <nav class="doc-nav">
+            <p class="doc-nav-heading small fw-semibold text-body-secondary text-uppercase mb-2">Documentation</p>
+            <ul class="list-unstyled mb-0">
+                {% assign sorted_docs = site.docs | sort: 'order' %}
+                {% for doc in sorted_docs %}
+                <li>
+                    <a class="doc-nav-link{% if page.url == doc.url %} active{% endif %}" href="{{ doc.url | relative_url }}">
+                        {{ doc.title }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </aside>
+
+    <div class="doc-content">
+        <a href="{{ '/docs' | relative_url }}" class="btn btn-outline-secondary btn-sm mb-3 d-lg-none">
+            <i class="fas fa-arrow-left"></i> All Docs
+        </a>
+
+        <article class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <header class="mb-4">
+                    <h1 class="h2 mb-1">{{ page.title }}</h1>
+                    {% if page.description %}
+                    <p class="text-body-secondary mb-0">{{ page.description }}</p>
+                    {% endif %}
+                </header>
+
+                <div class="post-body">
+                    {{ content }}
+                </div>
+            </div>
+        </article>
+    </div>
+</div>

@@ -2,6 +2,8 @@
   <span style="font-weight:700;">Sfera</span>Doc
 </h1>
 
+[![Hex.pm](https://img.shields.io/hexpm/v/sfera_doc.svg)](https://hex.pm/packages/sfera_doc) [![HexDocs](https://img.shields.io/badge/hexdocs-reference-1f6feb)](https://hexdocs.pm/sfera_doc/SferaDoc.html) [![Website](https://img.shields.io/badge/website-sfera--doc-0ea5e9)](https://sfera-lab.github.io/sfera-doc/)
+
 PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF via Chrome.
 
 ## Features
@@ -60,30 +62,10 @@ config :sfera_doc, :store, adapter: SferaDoc.Store.ETS
 
 ### 2. Create the database table (Ecto only)
 
-Generate and apply the migration automatically:
+Create a new mgiration, and copy the example migration from [`priv/migrations/create_sfera_doc_templates.exs`](priv/migrations/create_sfera_doc_templates.exs), then run the migration.
 
-```bash
-mix sfera_doc.ecto.setup
-mix ecto.migrate
-```
 
-Or create the migration manually (PostgreSQL):
-
-```elixir
-defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
-  use SferaDoc.Store.Ecto.Migration
-end
-```
-
-For SQLite or MySQL, pass the adapter option to omit PostgreSQL-specific DDL:
-
-```elixir
-defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
-  use SferaDoc.Store.Ecto.Migration, adapter: :sqlite
-end
-```
-
-For full customisation (custom columns, indexes, etc.) copy the expanded template from [`priv/migrations/create_sfera_doc_templates.exs`](priv/migrations/create_sfera_doc_templates.exs) and modify as needed.
+The example includes comments for PostgreSQL-specific parts (the `pgcrypto` extension and the partial unique index). Remove those if you are using MySQL or SQLite.
 
 ## Usage
 
@@ -269,3 +251,6 @@ SferaDoc emits the following telemetry events:
 
  <h1> Made with ❤️ by<span style="font-weight:700; color:#7C3AED; letter-spacing:0.5px;" > Sfera</span>
 </h1>
+
+
+
