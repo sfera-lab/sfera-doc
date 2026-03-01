@@ -103,4 +103,21 @@ defmodule SferaDoc.Store.ETSTest do
     assert {:error, :not_found} = Store.get("doc")
     {:ok, []} = Store.list_versions("doc")
   end
+
+  test "get_version returns :not_found for missing version" do
+    Store.put(%Template{name: "doc", body: "v1"})
+    assert {:error, :not_found} = Store.get_version("doc", 99)
+  end
+
+  test "list_versions returns empty list for unknown name" do
+    {:ok, []} = Store.list_versions("nonexistent")
+  end
+
+  test "list returns empty list when store has no templates" do
+    {:ok, []} = Store.list()
+  end
+
+  test "delete of non-existent name returns :ok" do
+    assert :ok = Store.delete("nonexistent")
+  end
 end

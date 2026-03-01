@@ -129,9 +129,7 @@ defmodule SferaDoc.Store.ETS do
   end
 
   def handle_call({:delete, name}, _from, state) do
-    :ets.match_object(@table, {{name, :_}, :_, :_})
-    |> Enum.each(fn {key, _v, _t} -> :ets.delete(@table, key) end)
-
+    :ets.match_delete(@table, {{name, :_}, :_, :_})
     {:reply, :ok, state}
   end
 

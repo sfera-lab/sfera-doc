@@ -1,5 +1,5 @@
 cond do
-  Code.ensure_loaded?(Ecto) ->
+  Code.ensure_loaded?(Ecto.Adapters.SQL) ->
     defmodule SferaDoc.Store.Ecto.Record do
       @moduledoc false
       # Internal Ecto schema for the sfera_doc_templates table.
@@ -34,6 +34,10 @@ cond do
         |> validate_length(:name, min: 1, max: 255)
         |> unique_constraint([:name, :version])
       end
+
+      # ---------------------------------------------------------------------------
+      # Query helpers
+      # ---------------------------------------------------------------------------
 
       def active_query(name) do
         from(r in __MODULE__,
@@ -77,6 +81,10 @@ cond do
 
         (max || 0) + 1
       end
+
+      # ---------------------------------------------------------------------------
+      # Conversion
+      # ---------------------------------------------------------------------------
 
       @doc "Converts an Ecto record to a `SferaDoc.Template` struct."
       def to_template(%__MODULE__{} = r) do
