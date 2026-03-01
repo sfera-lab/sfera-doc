@@ -1,6 +1,6 @@
 defmodule SferaDoc.Cache.ParsedTemplate do
   @moduledoc """
-  ETS-backed cache for parsed Solid template ASTs.
+  Internal ETS-backed cache for parsed Solid template ASTs.
 
   Parsing a Liquid template with `Solid.parse/1` is a CPU-bound operation.
   This cache stores the parsed AST (a few KB) per `{name, version}` pair
@@ -11,12 +11,6 @@ defmodule SferaDoc.Cache.ParsedTemplate do
       config :sfera_doc, :cache,
         enabled: true,
         ttl: 300
-
-  ## Reads
-
-  Reads bypass the GenServer and query ETS directly for maximum throughput.
-  Writes and invalidations are serialized through the GenServer to prevent
-  race conditions on the ETS table.
   """
 
   use GenServer
@@ -24,11 +18,7 @@ defmodule SferaDoc.Cache.ParsedTemplate do
   @table :sfera_doc_ast_cache
   @table_opts [:set, :protected, :named_table, read_concurrency: true]
 
-  # ---------------------------------------------------------------------------
-  # Supervisor integration
-  # ---------------------------------------------------------------------------
-
-  @doc "Returns a child spec for the supervisor, or `nil` if caching is disabled."
+  @doc false
   def worker_spec do
     cond do
       SferaDoc.Config.cache_enabled?() ->
@@ -44,34 +34,34 @@ defmodule SferaDoc.Cache.ParsedTemplate do
     end
   end
 
-  # ---------------------------------------------------------------------------
-  # Public API (called from Renderer)
-  # ---------------------------------------------------------------------------
-
-  @doc """
-  Returns `{:ok, ast}` on cache hit within TTL, `:miss` otherwise.
-  Reads ETS directly, no GenServer call overhead.
-
-  Returns `:miss` immediately when caching is disabled (the ETS table is not
-  created in that case, so attempting a lookup would raise `ArgumentError`).
-  """
+  #  Reads bypass the GenServer and query ETS directly for maximum throughput.
+  #  Writes and invalidations are serialised through the GenServer to prevent
+  #  race conditions on the ETS table.
+  @doc false
   @spec get(String.t(), pos_integer()) :: {:ok, term()} | :miss
   def get(name, version) do
-    if SferaDoc.Config.cache_enabled?() do
-      ttl = SferaDoc.Config.cache_ttl()
-      now = System.monotonic_time(:second)
-      key = {name, version}
+    cond do
+      SferaDoc.Config.cache_enabled?() ->
+        do_get(name, version)
 
-      case :ets.lookup(@table, key) do
-        [{^key, ast, stored_at}] when now - stored_at < ttl -> {:ok, ast}
-        _ -> :miss
-      end
-    else
-      :miss
+      true ->
+        :miss
     end
   end
 
-  @doc "Stores a parsed AST in the cache. Serialized through GenServer."
+  defp do_get(name, version) do
+    ttl = SferaDoc.Config.cache_ttl()
+    now = System.monotonic_time(:second)
+    key = {name, version}
+
+    case :ets.lookup(@table, key) do
+      [{^key, ast, stored_at}] when now - stored_at < ttl -> {:ok, ast}
+      _ -> :miss
+    end
+  end
+
+  # The GenServer serialises writes to the ETS table to ensure consistency.
+  @doc false
   @spec put(String.t(), pos_integer(), term()) :: :ok
   def put(name, version, ast) do
     cond do
@@ -83,7 +73,7 @@ defmodule SferaDoc.Cache.ParsedTemplate do
     end
   end
 
-  @doc "Removes a specific `{name, version}` entry from the cache."
+  @doc false
   @spec invalidate(String.t(), pos_integer()) :: :ok
   def invalidate(name, version) do
     cond do
@@ -94,10 +84,6 @@ defmodule SferaDoc.Cache.ParsedTemplate do
         :ok
     end
   end
-
-  # ---------------------------------------------------------------------------
-  # GenServer
-  # ---------------------------------------------------------------------------
 
   def start_link(_opts \\ []) do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
