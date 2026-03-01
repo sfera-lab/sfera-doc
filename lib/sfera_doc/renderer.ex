@@ -24,9 +24,7 @@ defmodule SferaDoc.Renderer do
 
     :telemetry.execute([:sfera_doc, :render, :start], %{system_time: System.system_time()}, meta)
 
-    result = do_render(name, assigns, opts)
-
-    case result do
+    case do_render(name, assigns, opts) do
       {:ok, _pdf} ->
         duration = System.monotonic_time() - start
         :telemetry.execute([:sfera_doc, :render, :stop], %{duration: duration}, meta)
