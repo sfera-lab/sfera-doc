@@ -1,0 +1,169 @@
+---
+layout: default
+---
+
+<section class="mb-5 text-center py-5">
+    <h1 class="display-5 fw-bold mb-3">{{ site.title }}</h1>
+    <p class="lead mb-4 mx-auto" style="max-width: 42rem;">
+        An extensible Elixir library for generating PDFs from versioned Liquid templates, backed by pluggable storage adapters, template engines, and PDF renderers.
+    </p>
+
+
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="{{ '/docs' | relative_url }}" class="btn btn-primary px-4">Get Started</a>
+        <a href="{{ site.github_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary px-4">
+            <i class="fab fa-github me-2"></i>GitHub
+        </a>
+        <a href="{{ site.hex_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary px-4">
+            <i class="fas fa-box me-2"></i>Hex.pm
+        </a>
+    </div>
+</section>
+
+
+<section class="mb-5 py-5">
+    <div class="container">
+        <h2 class="h2 mb-5 text-center fw-bold">Features</h2>
+
+        <div class="row g-4">
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-item p-3 h-100">
+                    <h3 class="h6 fw-semibold mb-2">
+                        <i class="fas fa-database me-2 text-primary"></i>
+                        Pluggable Storage
+                    </h3>
+                    <p class="small text-body-secondary mb-0">
+                        Store templates in PostgreSQL/SQLite via Ecto, in-process ETS, or Redis. 
+                        Switch adapters without changing application code.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-item p-3 h-100">
+                    <h3 class="h6 fw-semibold mb-2">
+                        <i class="fas fa-code-branch me-2 text-primary"></i>
+                        Template Versioning
+                    </h3>
+                    <p class="small text-body-secondary mb-0">
+                        Every update creates a new version. Roll back to any previous version 
+                        with a single function call.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-item p-3 h-100">
+                    <h3 class="h6 fw-semibold mb-2">
+                        <i class="fas fa-file-pdf me-2 text-primary"></i>
+                        PDF Generation
+                    </h3>
+                    <p class="small text-body-secondary mb-0">
+                        Render Liquid templates to HTML, then to PDF via ChromicPDF 
+                        (Chrome headless). Fully pluggable PDF engine.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-item p-3 h-100">
+                    <h3 class="h6 fw-semibold mb-2">
+                        <i class="fas fa-bolt me-2 text-primary"></i>
+                        Two-Tier PDF Cache
+                    </h3>
+                    <p class="small text-body-secondary mb-0">
+                        Optional hot cache (Redis/ETS) for fast reads and durable object store 
+                        (S3/Azure/FileSystem) for persistence.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-item p-3 h-100">
+                    <h3 class="h6 fw-semibold mb-2">
+                        <i class="fas fa-check-circle me-2 text-primary"></i>
+                        Variable Validation
+                    </h3>
+                    <p class="small text-body-secondary mb-0">
+                        Declare required and optional variables per template. 
+                        SferaDoc validates them before rendering and returns clear errors.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-item p-3 h-100">
+                    <h3 class="h6 fw-semibold mb-2">
+                        <i class="fas fa-plug me-2 text-primary"></i>
+                        Pluggable Adapters
+                    </h3>
+                    <p class="small text-body-secondary mb-0">
+                        Swap out the Liquid engine or PDF renderer by implementing 
+                        a simple behaviour. No lock-in.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+            <h2 class="h2 mb-3 text-center">Installation</h2>
+
+<section class="mb-5">
+    <div class="card border-9">
+        <div class="card-body p-4">
+            <p class="mb-2 text-body-secondary small">Add to <code>mix.exs</code>:</p>
+            <pre class="mb-0"><code class="language-elixir">{:sfera_doc, "~> 0.1"}</code></pre>
+        </div>
+    </div>
+</section>
+
+            <h2 class="h2 mb-3 text-center">Quick Start</h2>
+
+<section class="mb-5">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <pre class="mb-0"><code class="language-elixir"># 1. Configure a storage backend
+config :sfera_doc, :store,
+  adapter: SferaDoc.Store.Ecto,
+  repo: MyApp.Repo
+
+# 2. Create a template
+{:ok, _} = SferaDoc.create_template(
+  "invoice",
+  "&lt;h1&gt;Invoice for {{ customer_name }}&lt;/h1&gt;",
+  variables_schema: %{"required" =&gt; ["customer_name"]}
+)
+
+# 3. Render to PDF
+{:ok, pdf} = SferaDoc.render("invoice", %{"customer_name" =&gt; "Acme Corp"})
+File.write!("invoice.pdf", pdf)</code></pre>
+        </div>
+    </div>
+</section>
+
+
+
+
+<section class="mb-4">
+    <h2 class="h2 mb-3 text-center">Documentation</h2>
+    <div class="row g-3">
+        {% assign sorted_docs = site.docs | sort: 'order' %}
+        {% for doc in sorted_docs %}
+        <div class="col-md-6">
+            <a href="{{ doc.url | relative_url }}" class="text-decoration-none">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h3 class="h6 fw-semibold mb-1">{{ doc.title }}</h3>
+                        {% if doc.description %}
+                        <p class="small mb-0 text-body-secondary">{{ doc.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
