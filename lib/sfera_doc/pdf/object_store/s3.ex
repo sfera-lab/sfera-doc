@@ -30,8 +30,8 @@ defmodule SferaDoc.Pdf.ObjectStore.S3 do
   @impl true
   def get(name, version, hash) do
     ensure_deps!()
-    key = object_key(name, version, hash)
     opts = Application.get_env(:sfera_doc, :pdf_object_store, [])
+    key = object_key(name, version, hash, opts)
     bucket = Keyword.fetch!(opts, :bucket)
     ex_aws_opts = Keyword.get(opts, :ex_aws, [])
 
@@ -56,8 +56,8 @@ defmodule SferaDoc.Pdf.ObjectStore.S3 do
   @impl true
   def put(name, version, hash, binary) do
     ensure_deps!()
-    key = object_key(name, version, hash)
     opts = Application.get_env(:sfera_doc, :pdf_object_store, [])
+    key = object_key(name, version, hash, opts)
     bucket = Keyword.fetch!(opts, :bucket)
     ex_aws_opts = Keyword.get(opts, :ex_aws, [])
 
@@ -80,8 +80,7 @@ defmodule SferaDoc.Pdf.ObjectStore.S3 do
   # Private
   # ---------------------------------------------------------------------------
 
-  defp object_key(name, version, hash) do
-    opts = Application.get_env(:sfera_doc, :pdf_object_store, [])
+  defp object_key(name, version, hash, opts) do
     prefix = Keyword.get(opts, :prefix, "")
     "#{prefix}#{name}/#{version}/#{hash}.pdf"
   end
