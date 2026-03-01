@@ -2,6 +2,8 @@
   <span style="font-weight:700;">Sfera</span>Doc
 </h1>
 
+[![Hex.pm](https://img.shields.io/hexpm/v/sfera_doc.svg)](https://hex.pm/packages/sfera_doc) [![HexDocs](https://img.shields.io/badge/hexdocs-reference-1f6feb)](https://hexdocs.pm/sfera_doc/SferaDoc.html) [![Website](https://img.shields.io/badge/website-sfera--doc-0ea5e9)](https://sfera-lab.github.io/sfera-doc/)
+
 PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF via Chrome.
 
 ## Features
@@ -249,3 +251,6 @@ SferaDoc emits the following telemetry events:
 
  <h1> Made with ❤️ by<span style="font-weight:700; color:#7C3AED; letter-spacing:0.5px;" > Sfera</span>
 </h1>
+
+
+
