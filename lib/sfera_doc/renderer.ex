@@ -6,7 +6,7 @@ defmodule SferaDoc.Renderer do
   alias SferaDoc.{Store, Template}
   alias SferaDoc.Cache.ParsedTemplate
   alias SferaDoc.Pdf.{HotCache, ObjectStore}
-  alias SferaDoc.TemplateEngine
+  alias SferaDoc.{PdfEngine, TemplateEngine}
 
   @doc """
   Renders a template to a PDF binary.
@@ -91,29 +91,34 @@ defmodule SferaDoc.Renderer do
         {:ok, ast}
 
       :miss ->
-        case TemplateEngine.Solid.parse(template.body) do
+        case TemplateEngine.parse(template.body) do
           {:ok, ast} ->
             ParsedTemplate.put(template.name, template.version, ast)
             {:ok, ast}
 
-          {:error, _} = error ->
-            error
+          {:error, error} ->
+            {:error, {:template_parse_error, error}}
         end
     end
   end
 
   defp render_html(ast, assigns) do
-    TemplateEngine.Solid.render(ast, assigns)
+    case TemplateEngine.render(ast, assigns) do
+      {:ok, html} ->
+        {:ok, html}
+
+      {:error, {errors, partial_html}} ->
+        {:error, {:template_render_error, errors, partial_html}}
+
+      {:error, error} ->
+        {:error, {:template_render_error, error}}
+    end
   end
 
   defp render_pdf(html, opts) do
     extra_opts = Keyword.get(opts, :chromic_pdf, [])
     pdf_opts = Keyword.merge([output: :binary], extra_opts)
-
-    case ChromicPDF.print_to_pdf({:html, html}, pdf_opts) do
-      {:ok, _} = ok -> ok
-      other -> {:error, {:chromic_pdf_error, other}}
-    end
+    PdfEngine.render(html, pdf_opts)
   end
 
   defp assigns_hash(assigns) do

@@ -44,7 +44,10 @@ defmodule SferaDoc.Store.Redis do
     opts = SferaDoc.Config.redis_config()
 
     conn_opts =
-      if is_list(opts), do: Keyword.merge(opts, name: @conn), else: [name: @conn, url: opts]
+      cond do
+        is_list(opts) -> Keyword.merge(opts, name: @conn)
+        true -> [name: @conn, url: opts]
+      end
 
     Redix.child_spec(conn_opts)
   end

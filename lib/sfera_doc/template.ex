@@ -41,7 +41,7 @@ defmodule SferaDoc.Template do
           body: String.t(),
           version: pos_integer() | nil,
           is_active: boolean() | nil,
-          variables_schema: map() | nil,
+          variables_schema: %{optional(String.t()) => [String.t()]} | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -56,6 +56,8 @@ defmodule SferaDoc.Template do
 
   Returns `{:error, {:missing_variables, [String.t()]}}` listing missing keys.
 
+  Returns `{:error, :assigns_must_be_map}` when `assigns` is not a map.
+
   ## Examples
 
       iex> t = %SferaDoc.Template{name: "t", body: "x", variables_schema: %{"required" => ["name"]}}
@@ -65,8 +67,10 @@ defmodule SferaDoc.Template do
       iex> SferaDoc.Template.validate_variables(t, %{})
       {:error, {:missing_variables, ["name"]}}
   """
-  @spec validate_variables(t(), map()) ::
-          :ok | {:error, {:missing_variables, [String.t()]}} | {:error, :assigns_must_be_map}
+  @spec validate_variables(t(), term()) ::
+          :ok
+          | {:error, {:missing_variables, [String.t()]}}
+          | {:error, :assigns_must_be_map}
   def validate_variables(%__MODULE__{}, assigns) when not is_map(assigns) do
     {:error, :assigns_must_be_map}
   end
@@ -74,7 +78,10 @@ defmodule SferaDoc.Template do
   def validate_variables(%__MODULE__{variables_schema: nil}, _assigns), do: :ok
 
   def validate_variables(%__MODULE__{variables_schema: schema}, assigns) do
-    required = Map.get(schema, "required", [])
+    required = case Map.get(schema, "required", []) do
+      list when is_list(list) -> list
+      _ -> []
+    end
     missing = Enum.reject(required, &Map.has_key?(assigns, &1))
 
     case missing do

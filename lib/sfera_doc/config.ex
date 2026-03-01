@@ -24,6 +24,8 @@ defmodule SferaDoc.Config do
   - `:pdf_hot_cache, :ttl`: hot-cache TTL in seconds (default: `60`)
   - `:pdf_object_store, :adapter`: PDF object-store adapter module (default: disabled)
   - `:chromic_pdf`: options passed directly to `ChromicPDF` (default: `[]`)
+  - `:template_engine, :adapter`: template engine adapter module (default: `SferaDoc.TemplateEngine.Solid`)
+  - `:pdf_engine, :adapter`: PDF engine adapter module (default: `SferaDoc.PdfEngine.ChromicPDF`)
   """
 
   # ---------------------------------------------------------------------------
@@ -145,5 +147,17 @@ defmodule SferaDoc.Config do
   @doc "Returns ChromicPDF supervisor options, passed through from config."
   def chromic_pdf_opts do
     Application.get_env(:sfera_doc, :chromic_pdf, [])
+  end
+
+  @doc "Returns the configured template engine adapter module."
+  def template_engine_adapter do
+    Application.get_env(:sfera_doc, :template_engine, [])
+    |> Keyword.get(:adapter, SferaDoc.TemplateEngine.Solid)
+  end
+
+  @doc "Returns the configured PDF engine adapter module."
+  def pdf_engine_adapter do
+    Application.get_env(:sfera_doc, :pdf_engine, [])
+    |> Keyword.get(:adapter, SferaDoc.PdfEngine.ChromicPDF)
   end
 end

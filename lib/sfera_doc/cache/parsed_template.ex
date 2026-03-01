@@ -30,15 +30,17 @@ defmodule SferaDoc.Cache.ParsedTemplate do
 
   @doc "Returns a child spec for the supervisor, or `nil` if caching is disabled."
   def worker_spec do
-    if SferaDoc.Config.cache_enabled?() do
-      %{
-        id: __MODULE__,
-        start: {__MODULE__, :start_link, []},
-        type: :worker,
-        restart: :permanent
-      }
-    else
-      nil
+    cond do
+      SferaDoc.Config.cache_enabled?() ->
+        %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, []},
+          type: :worker,
+          restart: :permanent
+        }
+
+      true ->
+        nil
     end
   end
 
@@ -72,20 +74,24 @@ defmodule SferaDoc.Cache.ParsedTemplate do
   @doc "Stores a parsed AST in the cache. Serialized through GenServer."
   @spec put(String.t(), pos_integer(), term()) :: :ok
   def put(name, version, ast) do
-    if SferaDoc.Config.cache_enabled?() do
-      GenServer.call(__MODULE__, {:put, name, version, ast})
-    else
-      :ok
+    cond do
+      SferaDoc.Config.cache_enabled?() ->
+        GenServer.call(__MODULE__, {:put, name, version, ast})
+
+      true ->
+        :ok
     end
   end
 
   @doc "Removes a specific `{name, version}` entry from the cache."
   @spec invalidate(String.t(), pos_integer()) :: :ok
   def invalidate(name, version) do
-    if SferaDoc.Config.cache_enabled?() do
-      GenServer.call(__MODULE__, {:invalidate, name, version})
-    else
-      :ok
+    cond do
+      SferaDoc.Config.cache_enabled?() ->
+        GenServer.call(__MODULE__, {:invalidate, name, version})
+
+      true ->
+        :ok
     end
   end
 

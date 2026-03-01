@@ -43,5 +43,15 @@ defmodule SferaDoc.TemplateTest do
       t = %Template{name: "t", body: "x", variables_schema: %{"optional" => ["footer"]}}
       assert :ok = Template.validate_variables(t, %{})
     end
+
+    test "returns assigns_must_be_map when assigns is not a map" do
+      t = %Template{name: "t", body: "x", variables_schema: %{"required" => ["name"]}}
+      assert {:error, :assigns_must_be_map} = Template.validate_variables(t, [name: "Alice"])
+    end
+
+    test "ignores malformed required value in schema" do
+      t = %Template{name: "t", body: "x", variables_schema: %{"required" => "name"}}
+      assert :ok = Template.validate_variables(t, %{})
+    end
   end
 end

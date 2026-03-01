@@ -9,11 +9,12 @@ defmodule SferaDoc do
      while keeping the full history.
 
   2. **Template parsing**: Templates are parsed with the [`solid`](https://hex.pm/packages/solid)
-     Liquid template engine. Parsed ASTs are cached in ETS to avoid repeated parsing.
+     Liquid template engine by default (pluggable via a behavior adapter). Parsed ASTs
+     are cached in ETS to avoid repeated parsing.
 
   3. **PDF rendering**: Rendered HTML is passed to
-     [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based) to produce
-     a PDF binary.
+     [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) by default (also pluggable
+     via a behavior adapter) to produce a PDF binary.
 
   ## Quick Start
 

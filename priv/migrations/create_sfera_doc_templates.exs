@@ -1,6 +1,16 @@
 defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
   use Ecto.Migration
 
+  # This is the expanded reference migration. For most setups you can use the
+  # shorter form instead:
+  #
+  #     defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
+  #       use SferaDoc.Store.Ecto.Migration
+  #     end
+  #
+  # Use this expanded form only when you need to customise columns, indexes,
+  # or skip PostgreSQL-specific DDL (see comments below).
+  #
   # This migration assumes the default table name of "sfera_doc_templates"
   # is being used. If you have overridden that via configuration, you should
   # change this migration accordingly.
@@ -33,6 +43,9 @@ defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
   end
 
   def down do
+    # Drops the table and all associated indexes (including the partial unique
+    # index). The pgcrypto extension is intentionally NOT dropped here as other
+    # tables in the database may depend on it.
     drop table(:sfera_doc_templates)
   end
 end

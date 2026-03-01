@@ -36,12 +36,16 @@ defmodule SferaDoc.Supervisor do
   end
 
   defp chromic_pdf_spec do
-    opts = SferaDoc.Config.chromic_pdf_opts()
+    cond do
+      SferaDoc.Config.pdf_engine_adapter() != SferaDoc.PdfEngine.ChromicPDF ->
+        nil
 
-    if Keyword.get(opts, :disabled, false) do
-      nil
-    else
-      {ChromicPDF, Keyword.delete(opts, :disabled)}
+      Keyword.get(SferaDoc.Config.chromic_pdf_opts(), :disabled, false) ->
+        nil
+
+      true ->
+        opts = SferaDoc.Config.chromic_pdf_opts()
+        {ChromicPDF, Keyword.delete(opts, :disabled)}
     end
   end
 end
