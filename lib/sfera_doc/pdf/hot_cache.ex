@@ -104,7 +104,14 @@ defmodule SferaDoc.Pdf.HotCache do
 
   @impl GenServer
   def init(:ets) do
-    :ets.new(@ets_table, [:set, :public, :named_table, read_concurrency: true, write_concurrency: true])
+    :ets.new(@ets_table, [
+      :set,
+      :public,
+      :named_table,
+      read_concurrency: true,
+      write_concurrency: true
+    ])
+
     schedule_sweep()
     {:ok, :ets}
   end
@@ -132,8 +139,12 @@ defmodule SferaDoc.Pdf.HotCache do
     key = redis_key(name, version, hash)
 
     case Redix.command(@redis_conn, ["GET", key]) do
-      {:ok, nil} -> :miss
-      {:ok, binary} -> {:ok, binary}
+      {:ok, nil} ->
+        :miss
+
+      {:ok, binary} ->
+        {:ok, binary}
+
       {:error, reason} ->
         Logger.warning("SferaDoc.Pdf.HotCache: Redis get failed for #{key}: #{inspect(reason)}")
         :miss
@@ -145,7 +156,9 @@ defmodule SferaDoc.Pdf.HotCache do
     key = redis_key(name, version, hash)
 
     case Redix.command(@redis_conn, ["SET", key, binary, "EX", ttl]) do
-      {:ok, _} -> :ok
+      {:ok, _} ->
+        :ok
+
       {:error, reason} ->
         Logger.warning("SferaDoc.Pdf.HotCache: Redis put failed for #{key}: #{inspect(reason)}")
         :ok
