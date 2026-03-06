@@ -101,7 +101,7 @@ defmodule SferaDoc do
 
   ## Versioning
 
-  Each update creates a new version. Previous versions are preserved.
+  Calling `create_template/3` with the same name creates a new version. Previous versions are preserved.
 
       iex> SferaDoc.create_template("template_name", "<h1>v1</h1>")
       {:ok,
@@ -116,7 +116,7 @@ defmodule SferaDoc do
          updated_at: ~U[2026-03-06 20:26:41Z]
        }}
 
-      iex> SferaDoc.update_template("template_name", "<h1>v2</h1>")
+      iex> SferaDoc.create_template("template_name", "<h1>v2</h1>")
       {:ok,
        %SferaDoc.Template{
          id: "942ba9af-a542-43e8-9b71-1313e2c551ef",
@@ -303,17 +303,21 @@ defmodule SferaDoc do
   # ---------------------------------------------------------------------------
 
   @doc """
-  Creates a new template with version 1 if new, or adds version (<latest_version>+1) if a template with the same name exists.
+  Creates a new template or adds a new version to an existing template.
 
-  Use `update_template/3` to add subsequent versions.
+  - If the template name doesn't exist, creates version 1
+  - If the template name exists, creates version N+1 and marks it as active
+
+  Previous versions are preserved and can be restored with `activate_version/2`.
 
   ## Options
 
   - `:variables_schema`: map with `"required"` and/or `"optional"` lists:
     `%{"required" => ["name"], "optional" => ["footer"]}`
 
-  ## Example
+  ## Examples
 
+      # First time - creates version 1
       {:ok,
        %SferaDoc.Template{
          id: "cd940533-52ee-4b6a-bb14-902f21d234b6",
@@ -329,6 +333,23 @@ defmodule SferaDoc do
                "<p>Hello {{ name }}!</p>",
                variables_schema: %{"required" => ["name"]}
              )
+
+      # Subsequent call - creates version 2
+      {:ok,
+       %SferaDoc.Template{
+         id: "942ba9af-a542-43e8-9b71-1313e2c551ef",
+         name: "welcome_email",
+         body: "<p>Hi {{ name }}! Welcome aboard.</p>",
+         version: 2,
+         is_active: true,
+         variables_schema: %{"required" => ["name"]},
+         inserted_at: ~U[2026-03-06 19:35:22Z],
+         updated_at: ~U[2026-03-06 19:35:22Z]
+       }} = SferaDoc.create_template(
+               "welcome_email",
+               "<p>Hi {{ name }}! Welcome aboard.</p>",
+               variables_schema: %{"required" => ["name"]}
+             )
   """
   @spec create_template(String.t(), String.t(), keyword()) ::
           {:ok, Template.t()} | {:error, any()}
@@ -336,24 +357,6 @@ defmodule SferaDoc do
     Store.put(%Template{
       name: name,
       body: body,
-      variables_schema: Keyword.get(opts, :variables_schema)
-    })
-  end
-
-  @doc """
-  Creates a new version of an existing template.
-
-  The new version is immediately set as active. The previous version is
-  preserved and can be restored with `activate_version/2`.
-
-  Accepts the same options as `create_template/3`.
-  """
-  @spec update_template(String.t(), String.t(), keyword()) ::
-          {:ok, Template.t()} | {:error, any()}
-  def update_template(name, new_body, opts \\ []) do
-    Store.put(%Template{
-      name: name,
-      body: new_body,
       variables_schema: Keyword.get(opts, :variables_schema)
     })
   end

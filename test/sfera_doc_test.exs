@@ -24,18 +24,18 @@
 #     assert fetched.body == "Hello {{ name }}!"
 #   end
 
-#   test "update_template creates a new version" do
+#   test "create_template creates a new version" do
 #     {:ok, _v1} = SferaDoc.create_template("doc", "v1")
-#     {:ok, v2} = SferaDoc.update_template("doc", "v2")
+#     {:ok, v2} = SferaDoc.create_template("doc", "v2")
 #     assert v2.version == 2
 
 #     {:ok, active} = SferaDoc.get_template("doc")
 #     assert active.body == "v2"
 #   end
 
-#   test "update_template deactivates previous version" do
+#   test "create_template deactivates previous version" do
 #     {:ok, _v1} = SferaDoc.create_template("doc", "v1")
-#     {:ok, _v2} = SferaDoc.update_template("doc", "v2")
+#     {:ok, _v2} = SferaDoc.create_template("doc", "v2")
 
 #     {:ok, v1} = SferaDoc.get_template("doc", version: 1)
 #     assert v1.is_active == false
@@ -43,7 +43,7 @@
 
 #   test "get_template with version option" do
 #     SferaDoc.create_template("doc", "v1")
-#     SferaDoc.update_template("doc", "v2")
+#     SferaDoc.create_template("doc", "v2")
 
 #     {:ok, v1} = SferaDoc.get_template("doc", version: 1)
 #     assert v1.body == "v1"
@@ -66,7 +66,7 @@
 
 #   test "list_templates returns one entry per name after updates" do
 #     SferaDoc.create_template("doc", "v1")
-#     SferaDoc.update_template("doc", "v2")
+#     SferaDoc.create_template("doc", "v2")
 
 #     {:ok, templates} = SferaDoc.list_templates()
 #     assert length(templates) == 1
@@ -75,7 +75,7 @@
 
 #   test "list_versions returns all versions" do
 #     SferaDoc.create_template("doc", "v1")
-#     SferaDoc.update_template("doc", "v2")
+#     SferaDoc.create_template("doc", "v2")
 
 #     {:ok, versions} = SferaDoc.list_versions("doc")
 #     assert length(versions) == 2
@@ -88,7 +88,7 @@
 
 #   test "activate_version rolls back to previous version" do
 #     SferaDoc.create_template("doc", "v1")
-#     SferaDoc.update_template("doc", "v2")
+#     SferaDoc.create_template("doc", "v2")
 
 #     {:ok, _} = SferaDoc.activate_version("doc", 1)
 #     {:ok, active} = SferaDoc.get_template("doc")
@@ -98,7 +98,7 @@
 
 #   test "activate_version deactivates previously active version" do
 #     SferaDoc.create_template("doc", "v1")
-#     SferaDoc.update_template("doc", "v2")
+#     SferaDoc.create_template("doc", "v2")
 
 #     SferaDoc.activate_version("doc", 1)
 
@@ -120,7 +120,7 @@
 
 #   test "delete_template removes all versions" do
 #     SferaDoc.create_template("doc", "v1")
-#     SferaDoc.update_template("doc", "v2")
+#     SferaDoc.create_template("doc", "v2")
 #     :ok = SferaDoc.delete_template("doc")
 
 #     {:ok, versions} = SferaDoc.list_versions("doc")
@@ -138,11 +138,11 @@
 #     assert t.variables_schema == %{"required" => ["customer"]}
 #   end
 
-#   test "update_template accepts variables_schema" do
+#   test "create_template accepts variables_schema" do
 #     SferaDoc.create_template("doc", "v1", variables_schema: %{"required" => ["name"]})
 
 #     {:ok, v2} =
-#       SferaDoc.update_template("doc", "v2", variables_schema: %{"required" => ["name", "date"]})
+#       SferaDoc.create_template("doc", "v2", variables_schema: %{"required" => ["name", "date"]})
 
 #     assert v2.variables_schema == %{"required" => ["name", "date"]}
 #   end

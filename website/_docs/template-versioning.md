@@ -6,22 +6,22 @@ order: 4
 
 ## How Versioning Works
 
-Every call to `SferaDoc.update_template/3` creates a new version and immediately makes it the **active** version. Previous versions are preserved indefinitely.
+Every call to `SferaDoc.create_template/3` with the same template name creates a new version and immediately makes it the **active** version. Previous versions are preserved indefinitely.
 
 At render time, SferaDoc uses the active version unless you explicitly request another.
 
-## Creating and Updating Templates
+## Creating and Versioning Templates
 
 ```elixir
-# Creates version 1
+# First call creates version 1
 {:ok, v1} = SferaDoc.create_template(
   "invoice",
   "<h1>Invoice v1 for {{ name }}</h1>",
   variables_schema: %{"required" => ["name"]}
 )
 
-# Creates version 2 and activates it
-{:ok, v2} = SferaDoc.update_template(
+# Calling again with the same name creates version 2 and activates it
+{:ok, v2} = SferaDoc.create_template(
   "invoice",
   "<h1>Invoice v2 for {{ name }}</h1><p>New layout</p>"
 )
