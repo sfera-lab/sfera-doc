@@ -4,7 +4,7 @@
 
 
 
-PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF via Chrome.
+PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF.
 
 **Quick Links:** [Quick Start](#quick-start) · [Installation](#installation) · [Setup](#setup) · [Usage](#usage) · [Workflows](#workflows) · [Storage Backends](#understanding-storage-backends) · [Configuration](#configuration-reference) · [Extensibility](#extensibility)
 
