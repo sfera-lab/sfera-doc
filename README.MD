@@ -2,9 +2,35 @@
 
 [![Hex.pm](https://img.shields.io/hexpm/v/sfera_doc.svg)](https://hex.pm/packages/sfera_doc) [![HexDocs](https://img.shields.io/badge/hexdocs-reference-1f6feb)](https://hexdocs.pm/sfera_doc/SferaDoc.html) [![Website](https://img.shields.io/badge/website-sfera--doc-0ea5e9)](https://sfera-lab.github.io/sfera-doc/)
 
+
+
 PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF via Chrome.
 
-**Quick Links:** [Installation](#installation) · [Setup](#setup) · [Usage](#usage) · [Workflows](#workflows) · [Storage Backends](#understanding-storage-backends) · [Configuration](#configuration-reference) · [Extensibility](#extensibility)
+**Quick Links:** [Quick Start](#quick-start) · [Installation](#installation) · [Setup](#setup) · [Usage](#usage) · [Workflows](#workflows) · [Storage Backends](#understanding-storage-backends) · [Configuration](#configuration-reference) · [Extensibility](#extensibility)
+
+## Quick Start
+
+```elixir
+# 1. Create a template with Liquid syntax
+{:ok, _} = SferaDoc.create_template("invoice", """
+  <h1>Invoice #{{ number }}</h1>
+  <p>Customer: {{ customer_name }}</p>
+  <p>Total: {{ amount }}</p>
+""")
+
+# 2. Render to PDF
+{:ok, pdf_binary} = SferaDoc.render("invoice", %{
+  "number" => "INV-001",
+  "customer_name" => "Acme Corp",
+  "amount" => "$1,200"
+})
+
+# 3. Done! Save or serve the PDF
+File.write!("invoice.pdf", pdf_binary)
+```
+
+That's it. Templates are versioned automatically, variables are validated, and PDFs are cached. See [Installation](#installation) to get started.
+
 
 ## Features
 - **Template storage**: Liquid templates stored with full version history (Ecto, ETS, or Redis)
@@ -138,11 +164,11 @@ Create a new migration, and copy the example migration from [`priv/migrations/cr
 
 Storage backends persist your **template source code** and **version history**. They do not store rendered PDFs (see PDF object store for that).
 
-| Adapter | Use case | Persistence | Multi-node |
-|---|---|---|---|
-| `SferaDoc.Store.Ecto` | Production: PostgreSQL, MySQL, SQLite | Durable (database) | Yes (via shared DB) |
-| `SferaDoc.Store.Redis` | Distributed / Redis-heavy stacks | Durable (if Redis is persisted) | Yes (via shared Redis) |
-| `SferaDoc.Store.ETS` | Development and testing only | **Lost on restart** | No (in-memory) |
+| Adapter                | Use case                              | Persistence                     | Multi-node             |
+| ---------------------- | ------------------------------------- | ------------------------------- | ---------------------- |
+| `SferaDoc.Store.Ecto`  | Production: PostgreSQL, MySQL, SQLite | Durable (database)              | Yes (via shared DB)    |
+| `SferaDoc.Store.Redis` | Distributed / Redis-heavy stacks      | Durable (if Redis is persisted) | Yes (via shared Redis) |
+| `SferaDoc.Store.ETS`   | Development and testing only          | **Lost on restart**             | No (in-memory)         |
 
 **When to use each:**
 
@@ -331,11 +357,11 @@ request, the original behaviour).
 
 SferaDoc emits the following telemetry events:
 
-| Event | Measurements | Metadata |
-|---|---|---|
-| `[:sfera_doc, :render, :start]` | `system_time` | `template_name` |
-| `[:sfera_doc, :render, :stop]` | `duration` | `template_name` |
-| `[:sfera_doc, :render, :exception]` | `duration` | `template_name`, `error` |
+| Event                               | Measurements  | Metadata                 |
+| ----------------------------------- | ------------- | ------------------------ |
+| `[:sfera_doc, :render, :start]`     | `system_time` | `template_name`          |
+| `[:sfera_doc, :render, :stop]`      | `duration`    | `template_name`          |
+| `[:sfera_doc, :render, :exception]` | `duration`    | `template_name`, `error` |
 
 ## Extensibility
 
