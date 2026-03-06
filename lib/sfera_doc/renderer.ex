@@ -24,7 +24,9 @@ defmodule SferaDoc.Renderer do
 
     :telemetry.execute([:sfera_doc, :render, :start], %{system_time: System.system_time()}, meta)
 
-    case do_render(name, assigns, opts) do
+    result = do_render(name, assigns, opts)
+
+    case result do
       {:ok, _pdf} ->
         duration = System.monotonic_time() - start
         :telemetry.execute([:sfera_doc, :render, :stop], %{duration: duration}, meta)
@@ -115,14 +117,13 @@ defmodule SferaDoc.Renderer do
 
   defp render_pdf(html, opts) do
     extra_opts = Keyword.get(opts, :chromic_pdf, [])
-    pdf_opts = Keyword.merge([output: :binary], extra_opts)
-    PdfEngine.render(html, pdf_opts)
+    PdfEngine.render(html, extra_opts)
   end
 
   defp assigns_hash(assigns) do
     assigns
     |> :erlang.term_to_binary()
-    |> then(&:crypto.hash(:md5, &1))
+    |> then(&:crypto.hash(:sha256, &1))
     |> Base.encode16(case: :lower)
   end
 end

@@ -8,9 +8,9 @@ PDF generation library for Elixir. Store versioned [Liquid](https://shopify.gith
 
 ## Features
 - **Template storage**: Liquid templates stored with full version history (Ecto, ETS, or Redis)
-- **Template parsing**: Powered by [`solid`](https://hex.pm/packages/solid); parsed ASTs are cached in ETS
-- **PDF rendering**: HTML rendered by [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (Chrome-based)
-- **PDF storage**: Two-tier: Redis/ETS hot cache + durable object store (S3, Azure Blob, or file system)
+- **Template parsing**: Powered by [`solid`](https://hex.pm/packages/solid) (default, pluggable); parsed ASTs are cached in ETS
+- **PDF rendering**: HTML rendered by [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (default, pluggable)
+- **Two-tier PDF storage** (optional): Fast in-memory cache (Redis/ETS) + durable object store (S3, Azure Blob, or FileSystem)
 - **Variable validation**: Declare required variables per template and get clear errors before rendering
 
 ## Installation
@@ -62,10 +62,7 @@ config :sfera_doc, :store, adapter: SferaDoc.Store.ETS
 
 ### 2. Create the database table (Ecto only)
 
-Create a new mgiration, and copy the example migration from [`priv/migrations/create_sfera_doc_templates.exs`](priv/migrations/create_sfera_doc_templates.exs), then run the migration.
-
-
-The example includes comments for PostgreSQL-specific parts (the `pgcrypto` extension and the partial unique index). Remove those if you are using MySQL or SQLite.
+Create a new migration, and copy the example migration from [`priv/migrations/create_sfera_doc_templates.exs`](priv/migrations/create_sfera_doc_templates.exs), then run the migration.
 
 ## Usage
 
@@ -178,9 +175,9 @@ config :sfera_doc, :pdf_engine,
   adapter: SferaDoc.PdfEngine.ChromicPDF
 ```
 
-### PDF hot cache (opt-in)
+### PDF cache (opt-in)
 
-A fast, ephemeral front-tier cache. Repeat requests with identical variables are
+A fast, ephemeral first-tier cache. Repeat requests with identical variables are
 served from Redis or ETS without touching the object store or Chrome.
 
 ```elixir
@@ -200,9 +197,9 @@ config :sfera_doc, :pdf_hot_cache,
 
 ### PDF object store (opt-in)
 
-A durable, persistent tier, the **source of truth** for rendered PDFs. PDFs survive
-BEAM restarts. On a cache hit the PDF is returned directly and the hot cache is
-populated, avoiding Chrome entirely.
+A durable, persistent second-tier storage, the **source of truth** for rendered PDFs.
+PDFs survive BEAM restarts. On a cache hit the PDF is returned directly and the
+first-tier cache is populated, avoiding Chrome entirely.
 
 ```elixir
 # Amazon S3 (requires :ex_aws and :ex_aws_s3)
@@ -227,8 +224,8 @@ config :sfera_doc, :pdf_object_store,
   path: "/var/data/pdfs"
 ```
 
-Both tiers are fully independent. You can use the object store without a hot cache,
-the hot cache without the object store, both together, or neither (generate on every
+Both tiers are fully independent. You can use the object store without a cache,
+the cache without the object store, both together, or neither (generate on every
 request, the original behaviour).
 
 ## Storage Backends
@@ -248,6 +245,12 @@ SferaDoc emits the following telemetry events:
 | `[:sfera_doc, :render, :start]` | `system_time` | `template_name` |
 | `[:sfera_doc, :render, :stop]` | `duration` | `template_name` |
 | `[:sfera_doc, :render, :exception]` | `duration` | `template_name`, `error` |
+
+
+## Contributing 
+
+- [Development Guidlines](https://github.com/sfera-lab/sfera-doc/wiki/Development-Guidelines)
+
 
  <h1> Made with ❤️ by<span style="font-weight:700; color:#7C3AED; letter-spacing:0.5px;" > Sfera</span>
 </h1>

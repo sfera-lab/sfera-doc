@@ -52,18 +52,18 @@ cond do
             end
 
             create table(unquote(table_name), primary_key: false) do
-              add :id, :binary_id, primary_key: true
-              add :name, :string, null: false, size: 255
-              add :body, :text, null: false
-              add :version, :integer, null: false, default: 1
-              add :is_active, :boolean, null: false, default: false
-              add :variables_schema, :map
+              add(:id, :binary_id, primary_key: true)
+              add(:name, :string, null: false, size: 255)
+              add(:body, :text, null: false)
+              add(:version, :integer, null: false, default: 1)
+              add(:is_active, :boolean, null: false, default: false)
+              add(:variables_schema, :map)
 
               timestamps(type: :utc_datetime)
             end
 
-            create index(unquote(table_name), [:name])
-            create unique_index(unquote(table_name), [:name, :version])
+            create(index(unquote(table_name), [:name]))
+            create(unique_index(unquote(table_name), [:name, :version]))
 
             # Partial unique index: only one active version per template name.
             # PostgreSQL-specific; omitted for SQLite and MySQL.
@@ -76,7 +76,7 @@ cond do
             # Drops the table and all associated indexes (including the partial
             # unique index created in up/0). The pgcrypto extension is
             # intentionally NOT dropped here as other tables may depend on it.
-            drop table(unquote(table_name))
+            drop(table(unquote(table_name)))
           end
         end
       end

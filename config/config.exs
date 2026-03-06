@@ -31,7 +31,12 @@ import Config
 # config :sfera_doc, :pdf_engine,
 #   adapter: SferaDoc.PdfEngine.ChromicPDF
 
+persistence = System.get_env("STORAGE_ADAPTER")
+
 cond do
-  config_env() == :test -> import_config("test.exs")
-  true -> :ok
+  persistence == "ecto" ->
+    import_config("store/ecto.exs")
+
+  true ->
+    :ok
 end

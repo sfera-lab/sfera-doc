@@ -1,28 +1,30 @@
 # Changelog
 
-## Unrelease
+## Unreleased
 
-## Test
-- added the following test for `SferaDoc.Cache.ParsedTemplate`
-    - `get/2 returns :miss without crashing`
-    - `put/3 is a no-op and returns :ok`
-    - `invalidate/2 is a no-op and returns :ok`
-    - `worker_spec/0 returns nil`
-    - `worker_spec/0 returns a valid child spec`
-    - `get/2 returns :miss for unknown key`
-    - `put/3 and get/2 round-trip`
-    - `put/3 overwrites existing entry for the same key`
-    - `get/2 distinguishes different versions of the same template`
-    - `get/2 distinguishes different template names with same version`
-    - `invalidate/2 removes a specific entry`
-    - `invalidate/2 is idempotent for missing keys`
-    - `invalidate/2 does not affect other entries`
-    - `get/2 returns :miss after TTL expires`
-    - `get/2 returns hit when entry is within TTL`
-    - `cache stores arbitrary term as AST`
+### Added
+- `.iex.exs` development helper that auto-starts `SferaDoc.Dev.Repo` when using Ecto storage adapter
+- `SferaDoc.Dev.Repo` module for development database connection
+- Comprehensive test suite for `SferaDoc.Cache.ParsedTemplate` covering cache operations, TTL expiration, and edge cases
 
-### Refactored
-- refactored `SferaDoc.Cache.ParsedTemplate`, deleting unecessary documentation, streamlining logic into seperate private functions
+### Fixed
+- Changed PDF assigns hashing from MD5 to SHA-256 for better collision resistance
+- Fixed ChromicPDF adapter to remove invalid `:output` option and properly decode base64-encoded PDFs
+- Fixed `SferaDoc.Renderer.render/3` to return `{:ok, pdf_binary}` instead of telemetry result
+
+### Changed
+- Refactored `SferaDoc.Cache.ParsedTemplate` for better code organization and removed unnecessary documentation
+- Added debug logging for PDF size when rendering with ChromicPDF
+- Updated README:
+  - Added link to Development Guidelines wiki page under Contributing section
+  - Updated features to describe two-tier PDF storage architecture
+  - Changed "hot cache" terminology to "cache" for clarity
+- Updated module documentation:
+  - Simplified and shortened main module docs while preserving all examples
+  - Added explicit explanation of storage backends (templates vs PDFs)
+  - Reorganized PDF caching section into "Two-Tier PDF Storage"
+  - Added comprehensive pluggable adapter documentation for storage backends, template engines, PDF engines, and object stores
+  - Moved object store adapter documentation to Pluggable Engines section for consistency
 
 ## [0.0.1] 2026-02-27
 

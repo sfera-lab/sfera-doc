@@ -78,10 +78,12 @@ defmodule SferaDoc.Template do
   def validate_variables(%__MODULE__{variables_schema: nil}, _assigns), do: :ok
 
   def validate_variables(%__MODULE__{variables_schema: schema}, assigns) do
-    required = case Map.get(schema, "required", []) do
-      list when is_list(list) -> list
-      _ -> []
-    end
+    required =
+      case Map.get(schema, "required", []) do
+        list when is_list(list) -> list
+        _ -> []
+      end
+
     missing = Enum.reject(required, &Map.has_key?(assigns, &1))
 
     case missing do

@@ -1,34 +1,27 @@
 defmodule SferaDoc do
   @moduledoc """
-  PDF generation library with versioned Liquid templates stored in a database.
+  PDF generation with versioned Liquid templates.
 
-  SferaDoc combines three things:
-
-  1. **Template storage**: Liquid templates are stored in your database (or ETS/Redis)
-     with automatic versioning. Each `update_template/3` call creates a new version
-     while keeping the full history.
-
-  2. **Template parsing**: Templates are parsed with the [`solid`](https://hex.pm/packages/solid)
-     Liquid template engine by default (pluggable via a behavior adapter). Parsed ASTs
-     are cached in ETS to avoid repeated parsing.
-
-  3. **PDF rendering**: Rendered HTML is passed to
-     [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) by default (also pluggable
-     via a behavior adapter) to produce a PDF binary.
+  SferaDoc combines:
+  - **Storage**: Templates in Ecto/ETS/Redis with automatic versioning
+  - **Parsing**: Liquid templates via [`solid`](https://hex.pm/packages/solid) (default, pluggable), cached in ETS
+  - **Rendering**: HTML to PDF via [`chromic_pdf`](https://hex.pm/packages/chromic_pdf) (default, pluggable)
+  - **Cache**: Optional fast in-memory PDF cache (Redis/ETS)
+  - **Object Store**: Optional durable PDF storage (S3/Azure/FileSystem)
 
   ## Quick Start
 
-      # 1. Configure a storage backend
+      # 1. Configure storage
       config :sfera_doc, :store,
         adapter: SferaDoc.Store.Ecto,
         repo: MyApp.Repo
 
-      # 2. Add a migration
+      # 2. Add migration
       defmodule MyApp.Repo.Migrations.CreateSferaDocTemplates do
         use SferaDoc.Store.Ecto.Migration
       end
 
-      # 3. Create a template
+      # 3. Create template
       {:ok, template} = SferaDoc.create_template(
         "invoice",
         "<h1>Invoice for {{ customer_name }}</h1><p>Amount: {{ amount }}</p>",
@@ -41,44 +34,235 @@ defmodule SferaDoc do
         "amount" => "$1,200.00"
       })
 
-      # Save to file
       File.write!("invoice.pdf", pdf_binary)
 
   ## Storage Backends
 
+  Storage backends persist **template source code** and its metadata (name, version, variables_schema).
+  This is separate from PDF storage  templates are the input, PDFs are the output.
+
   | Adapter | Use case |
   |---|---|
-  | `SferaDoc.Store.Ecto` | Production: PostgreSQL, MySQL, SQLite |
-  | `SferaDoc.Store.ETS` | Development and testing only |
-  | `SferaDoc.Store.Redis` | Distributed / Redis-heavy stacks |
+  | `SferaDoc.Store.Ecto` | Production (PostgreSQL, MySQL, SQLite) |
+  | `SferaDoc.Store.ETS` | Development/testing only |
+  | `SferaDoc.Store.Redis` | Distributed systems |
 
-  ## Template Versioning
+  ## Two-Tier PDF Storage
 
-  Every call to `update_template/3` creates a new version and makes it active.
-  Previous versions are preserved and can be restored with `activate_version/2`.
+  SferaDoc uses a two-tier storage system for rendered PDFs:
 
-      {:ok, v1} = SferaDoc.create_template("invoice", "<h1>v1</h1>")
-      {:ok, v2} = SferaDoc.update_template("invoice", "<h1>v2</h1>")
+  1. **Cache** (fast, in-memory) - First lookup, short TTL
+  2. **Object store** (durable storage) - Second lookup, survives restarts
 
-      SferaDoc.list_versions("invoice")
-      # => {:ok, [%Template{version: 2, is_active: true}, %Template{version: 1, is_active: false}]}
+  ### Cache
 
-      SferaDoc.activate_version("invoice", 1)   # roll back to v1
+  Fast in-memory cache. Supports Redis or ETS. Disabled by default.
 
-  ## PDF Cache Warning
-
-  Rendering a PDF involves a round-trip to a Chrome process and can be slow.
-  An optional Redis-backed cache for rendered PDFs is available:
-
-      config :sfera_doc, :pdf_cache,
-        enabled: true,
+      # Redis (multi-node, production)
+      config :sfera_doc, :pdf_hot_cache,
+        adapter: :redis,
         ttl: 60
 
-  > #### Memory Warning {: .warning}
+      # ETS (single-node, development)
+      config :sfera_doc, :pdf_hot_cache,
+        adapter: :ets,
+        ttl: 300
+
+  Override Redis connection (reuses `:redis` config by default):
+
+      config :sfera_doc, :pdf_hot_cache,
+        adapter: :redis,
+        ttl: 60,
+        redis: [host: "cache.example.com", port: 6379]
+
+  ### Object Store
+
+  Durable storage for rendered PDFs. Available adapters:
+
+  | Adapter | Storage |
+  |---|---|
+  | `SferaDoc.Pdf.ObjectStore.S3` | Amazon S3 / S3-compatible |
+  | `SferaDoc.Pdf.ObjectStore.Azure` | Azure Blob Storage |
+  | `SferaDoc.Pdf.ObjectStore.FileSystem` | Local/shared filesystem |
+
+  Example S3 configuration:
+
+      config :sfera_doc, :pdf_object_store,
+        adapter: SferaDoc.Pdf.ObjectStore.S3,
+        bucket: "my-pdfs",
+        region: "us-east-1"
+
+  For custom object store adapters, see **Pluggable Engines** below.
+
+  > #### Warning {: .warning}
   >
-  > PDFs can be 100 KB – 10 MB or more. Only enable this cache with an
-  > explicit TTL and a Redis `maxmemory-policy`. ETS is intentionally not
-  > supported for PDF caching.
+  > PDFs can be 100 KB – 10 MB+. For Redis cache, set explicit TTL
+  > and `maxmemory-policy allkeys-lru` to prevent memory issues.
+
+  ## Versioning
+
+  Each update creates a new version. Previous versions are preserved.
+
+      iex> SferaDoc.create_template("template_name", "<h1>v1</h1>")
+      {:ok,
+       %SferaDoc.Template{
+         id: "c41ee418-e479-4751-8331-b55af0f8ef97",
+         name: "template_name",
+         body: "<h1>v1</h1>",
+         version: 1,
+         is_active: true,
+         variables_schema: nil,
+         inserted_at: ~U[2026-03-06 20:26:41Z],
+         updated_at: ~U[2026-03-06 20:26:41Z]
+       }}
+
+      iex> SferaDoc.update_template("template_name", "<h1>v2</h1>")
+      {:ok,
+       %SferaDoc.Template{
+         id: "942ba9af-a542-43e8-9b71-1313e2c551ef",
+         name: "template_name",
+         body: "<h1>v2</h1>",
+         version: 2,
+         is_active: true,
+         variables_schema: nil,
+         inserted_at: ~U[2026-03-06 20:28:25Z],
+         updated_at: ~U[2026-03-06 20:28:25Z]
+       }}
+
+      iex> SferaDoc.list_versions("template_name")
+      {:ok,
+       [
+         %SferaDoc.Template{
+           id: "942ba9af-a542-43e8-9b71-1313e2c551ef",
+           name: "template_name",
+           body: "<h1>v2</h1>",
+           version: 2,
+           is_active: true,
+           variables_schema: nil,
+           inserted_at: ~U[2026-03-06 20:28:25Z],
+           updated_at: ~U[2026-03-06 20:28:25Z]
+         },
+         %SferaDoc.Template{
+           id: "c41ee418-e479-4751-8331-b55af0f8ef97",
+           name: "template_name",
+           body: "<h1>v1</h1>",
+           version: 1,
+           is_active: false,
+           variables_schema: nil,
+           inserted_at: ~U[2026-03-06 20:26:41Z],
+           updated_at: ~U[2026-03-06 20:26:41Z]
+         }
+       ]}
+
+      iex> SferaDoc.activate_version("template_name", 1)  # rollback
+      {:ok,
+       %SferaDoc.Template{
+         id: "c41ee418-e479-4751-8331-b55af0f8ef97",
+         name: "template_name",
+         body: "<h1>v1</h1>",
+         version: 1,
+         is_active: true,
+         variables_schema: nil,
+         inserted_at: ~U[2026-03-06 20:26:41Z],
+         updated_at: ~U[2026-03-06 20:31:45Z]
+       }}
+
+      iex> SferaDoc.list_versions("template_name")
+      {:ok,
+       [
+         %SferaDoc.Template{
+           id: "942ba9af-a542-43e8-9b71-1313e2c551ef",
+           name: "template_name",
+           body: "<h1>v2</h1>",
+           version: 2,
+           is_active: false,
+           variables_schema: nil,
+           inserted_at: ~U[2026-03-06 20:28:25Z],
+           updated_at: ~U[2026-03-06 20:28:25Z]
+         },
+         %SferaDoc.Template{
+           id: "c41ee418-e479-4751-8331-b55af0f8ef97",
+           name: "template_name",
+           body: "<h1>v1</h1>",
+           version: 1,
+           is_active: true,
+           variables_schema: nil,
+           inserted_at: ~U[2026-03-06 20:26:41Z],
+           updated_at: ~U[2026-03-06 20:31:45Z]
+         }
+       ]}
+
+
+
+  ## Pluggable Engines
+
+  Storage backends, template engines, and PDF engines are all swappable via behavior adapters.
+
+  **Storage Backend** - Implement `SferaDoc.Store.Adapter`:
+
+      defmodule MyApp.MongoAdapter do
+        @behaviour SferaDoc.Store.Adapter
+
+        def worker_spec, do: nil  # Assuming Mongo supervised elsewhere
+
+        def get(name), do: # Fetch active template by name
+        def get_version(name, version), do: # Fetch specific version
+        def put(template), do: # Insert/update with versioning
+        def list(), do: # All templates (active only)
+        def list_versions(name), do: # All versions for name
+        def activate_version(name, version), do: # Make version active
+        def delete(name), do: # Delete all versions
+      end
+
+      config :sfera_doc, :store,
+        adapter: MyApp.MongoAdapter
+
+  **Template Engine** - Implement `SferaDoc.TemplateEngine.Adapter`:
+
+      defmodule MyApp.CustomTemplateEngine do
+        @behaviour SferaDoc.TemplateEngine.Adapter
+
+        def parse(template), do: {:ok, Mustache.compile(template)}
+        def render(ast, vars), do: {:ok, Mustache.render(ast, vars)}
+      end
+
+      config :sfera_doc, :template_engine,
+        adapter: MyApp.CustomTemplateEngine
+
+  **PDF Engine** - Implement `SferaDoc.PdfEngine.Adapter`:
+
+      defmodule MyApp.CustomPdfEngine do
+        @behaviour SferaDoc.PdfEngine.Adapter
+
+        def render(html, _opts) do
+          # Shell out to WeasyPrint, wkhtmltopdf, etc.
+          {:ok, pdf_binary}
+        end
+      end
+
+      config :sfera_doc, :pdf_engine,
+        adapter: MyApp.CustomPdfEngine
+
+  **PDF Object Store** - Implement `SferaDoc.Pdf.ObjectStore.Adapter`:
+
+      defmodule MyApp.GCSAdapter do
+        @behaviour SferaDoc.Pdf.ObjectStore.Adapter
+
+        def worker_spec, do: nil  # HTTP client, no supervision needed
+
+        def get(name, version, hash) do
+          # Fetch from Google Cloud Storage
+          {:ok, pdf_binary}  # or :miss
+        end
+
+        def put(name, version, hash, binary) do
+          # Upload to GCS
+          :ok
+        end
+      end
+
+      config :sfera_doc, :pdf_object_store,
+        adapter: MyApp.GCSAdapter
   """
 
   alias SferaDoc.{Store, Renderer, Template}
@@ -93,7 +277,7 @@ defmodule SferaDoc do
   ## Options
 
   - `:version`: render a specific version instead of the currently active one
-  - `:chromic_pdf`: extra options forwarded to `ChromicPDF.print_to_pdf/2`
+  - `:chromic_pdf`: extra options forwarded to the PDF engine (e.g. to `ChromicPDF.print_to_pdf/2`)
 
   ## Returns
 
@@ -106,8 +290,10 @@ defmodule SferaDoc do
 
   ## Examples
 
-      {:ok, pdf} = SferaDoc.render("invoice", %{"name" => "Alice"})
-      {:ok, pdf} = SferaDoc.render("invoice", %{"name" => "Alice"}, version: 2)
+      {:ok, pdf} = SferaDoc.render(
+               "welcome_email",
+               %{"name" => "Alice"}
+             )
   """
   @spec render(String.t(), map(), keyword()) :: {:ok, binary()} | {:error, any()}
   def render(name, assigns, opts \\ []), do: Renderer.render(name, assigns, opts)
@@ -117,7 +303,7 @@ defmodule SferaDoc do
   # ---------------------------------------------------------------------------
 
   @doc """
-  Creates a new template (version 1) or adds version 1 if the name is new.
+  Creates a new template with version 1 if new, or adds version (<latest_version>+1) if a template with the same name exists.
 
   Use `update_template/3` to add subsequent versions.
 
@@ -128,15 +314,25 @@ defmodule SferaDoc do
 
   ## Example
 
-      {:ok, template} = SferaDoc.create_template(
-        "welcome_email",
-        "<p>Hello {{ name }}!</p>",
-        variables_schema: %{"required" => ["name"]}
-      )
+      {:ok,
+       %SferaDoc.Template{
+         id: "cd940533-52ee-4b6a-bb14-902f21d234b6",
+         name: "welcome_email",
+         body: "<p>Hello {{ name }}!</p>",
+         version: 1,
+         is_active: true,
+         variables_schema: %{"required" => ["name"]},
+         inserted_at: ~U[2026-03-06 19:31:09Z],
+         updated_at: ~U[2026-03-06 19:31:09Z]
+       }} = SferaDoc.create_template(
+               "welcome_email",
+               "<p>Hello {{ name }}!</p>",
+               variables_schema: %{"required" => ["name"]}
+             )
   """
   @spec create_template(String.t(), String.t(), keyword()) ::
           {:ok, Template.t()} | {:error, any()}
-  def create_template(name, body, opts \\ []) do
+  def create_template(name, body, opts \\ []) when is_binary(name) and is_binary(body) do
     Store.put(%Template{
       name: name,
       body: body,
