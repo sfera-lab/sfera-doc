@@ -79,38 +79,7 @@ flowchart TD
 - **Every call creates a new version**, previous versions are preserved
 - **Only one version is active** per template name at a time
 - **Rollback is safe** - activate an older version without deleting anything
-- **History is permanent** until you explicitly `delete_template`
-
-### Template Lifecycle
-
-The full lifecycle of a template from creation to deletion:
-
-```mermaid
-flowchart LR
-    Create([create_template<br/>"invoice" v1]) --> Active1[Version 1<br/>✓ Active]
-    Active1 --> Update1([create_template<br/>"invoice" v2])
-    Update1 --> Versions[Version 2 ✓ Active<br/>Version 1]
-    Versions --> Update2([create_template<br/>"invoice" v3])
-    Update2 --> MoreVersions[Version 3 ✓ Active<br/>Version 2<br/>Version 1]
-
-    MoreVersions --> Rollback([activate_version<br/>"invoice", 1])
-    Rollback --> Restored[Version 3<br/>Version 2<br/>Version 1 ✓ Active]
-
-    Restored --> Delete([delete_template<br/>"invoice"])
-    Delete --> Gone[All versions removed]
-
-    Active1 -.->|render| PDF1[PDF output]
-    Versions -.->|render| PDF2[PDF output]
-    MoreVersions -.->|render| PDF3[PDF output]
-    Restored -.->|render| PDF1b[PDF output]
-```
-
-**Key concepts:**
-- **Templates start at version 1** when first created
-- **Calling create_template again with the same name increments the version** and marks it active
-- **All versions are queryable** with `list_versions/1`
-- **Render always uses the active version** unless you specify `version: N`
-- **Delete removes everything** - all versions are gone
+- **History is permanent** until you explicitly `SferaDoc.delete_template(template_name)`
 
 ## Installation
 
