@@ -1,4 +1,29 @@
 # Changelog
+## Unreleased
+
+### Changed
+- **Breaking:** Removed `update_template/3` function - use `create_template/3` for both creating and versioning templates (functionally identical)
+- Updated `create_template/3` documentation to clearly explain versioning behavior
+- Reorganized README with improved structure and navigation
+
+### Added
+- Quick links navigation bar in README for faster access to key sections
+- "Understanding storage backends" section with comprehensive comparison table and guidance
+- "Workflows" section with Mermaid diagrams visualizing core features:
+  - PDF rendering flow with caching and error paths
+  - Template versioning lifecycle
+  - Template management from creation to deletion
+- "Extensibility" section documenting all pluggable components:
+  - Custom storage backends
+  - Custom template engines
+  - Custom PDF engines
+  - Custom PDF object stores
+  - Custom PDF cache adapters
+- Reference implementations and example code for each extensibility point
+
+### Fixed
+- Corrected storage backend adapter interface documentation (was listing wrong callbacks)
+
 
 ## [0.0.2] 2026-03-06
 ### Added
