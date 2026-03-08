@@ -1,0 +1,42 @@
+name: tests (azure)
+
+on: [push, pull_request]
+
+jobs:
+  azure:
+    name: Run Azure Object Store Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - otp: '27.0'
+            elixir: '1.18'
+    env:
+      MIX_ENV: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/cache@v3
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ matrix.elixir }}-otp${{ matrix.otp }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.elixir }}-otp${{ matrix.otp }}-mix-
+      - run: mix deps.get
+      - name: Start Azurite
+        run: |
+          docker compose -f docker-compose.test.yml up -d azurite
+          for i in {1..10}; do
+            if nc -z localhost 10000; then
+            echo "Established connection to Azurite on port 10000"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker-compose.test.yml logs azurite
+          exit 1
+      - run: mix test.azure

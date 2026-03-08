@@ -1,0 +1,30 @@
+name: tests (file system)
+
+on: [push, pull_request]
+
+jobs:
+  file_system:
+    name: Run File System Object Store Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - otp: '27.0'
+            elixir: '1.18'
+    env:
+      MIX_ENV: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/cache@v3
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ matrix.elixir }}-otp${{ matrix.otp }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.elixir }}-otp${{ matrix.otp }}-mix-
+      - run: mix deps.get
+      - run: mix test.file_system
