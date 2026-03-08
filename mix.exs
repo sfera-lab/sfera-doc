@@ -51,6 +51,7 @@ defmodule SferaDoc.MixProject do
       # Optional PDF object-store adapters
       {:ex_aws, "~> 2.5", optional: true},
       {:ex_aws_s3, "~> 2.5", optional: true},
+      {:sweet_xml, "~> 0.7", optional: true},
       {:azurex, "~> 1.1", optional: true},
 
       # Dev/test
@@ -67,6 +68,9 @@ defmodule SferaDoc.MixProject do
         "test --only ecto"
       ],
       "test.redis": ["test --only redis"],
+      "test.azure": ["test --only azure"],
+      "test.s3": ["test --only s3"],
+      "test.file_system": ["test --only file_system"],
       "test.all": ["test.ets", "test.redis", "test.ecto"]
     ]
   end
