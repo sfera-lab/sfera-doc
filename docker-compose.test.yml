@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: sfera_doc_azurite
+    ports:
+      - "10000:10000"  # Blob service
+      - "10001:10001"  # Queue service
+      - "10002:10002"  # Table service
+    volumes:
+      - azurite_data:/data
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --debug /data/debug.log
+    environment:
+      - AZURITE_ACCOUNTS=devstoreaccount1:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+
+  s3ninja:
+    image: scireum/s3-ninja:latest
+    container_name: sfera_doc_s3ninja
+    ports:
+      - "9444:9000"  # S3 API
+    volumes:
+      - s3ninja_data:/home/sirius/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: sfera_doc_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  azurite_data:
+  s3ninja_data:
+  redis_data:
