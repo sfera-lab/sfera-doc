@@ -22,16 +22,22 @@ defmodule SferaDoc.Supervisor do
   end
 
   defp store_worker_spec do
-    try do
-      SferaDoc.Config.store_adapter().worker_spec()
-    rescue
-      UndefinedFunctionError ->
-        raise """
-        SferaDoc: the configured store adapter module is not available.
-        Make sure the adapter module exists and its dependencies are included:
+    case Application.get_env(:sfera_doc, :store, [])[:adapter] do
+      nil ->
+        nil
 
-            config :sfera_doc, :store, adapter: SferaDoc.Store.ETS   # or Ecto / Redis
-        """
+      adapter ->
+        try do
+          adapter.worker_spec()
+        rescue
+          UndefinedFunctionError ->
+            raise """
+            SferaDoc: the configured store adapter module is not available.
+            Make sure the adapter module exists and its dependencies are included:
+
+                config :sfera_doc, :store, adapter: SferaDoc.Store.ETS   # or Ecto / Redis
+            """
+        end
     end
   end
 
