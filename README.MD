@@ -484,9 +484,10 @@ Implement custom caching logic for the hot cache tier.
 
 **Reference implementations:** Built-in Redis and ETS adapters in [SferaDoc.Pdf.HotCache](https://github.com/sfera-lab/sfera-doc/tree/master/lib/sfera_doc/pdf/hot_cache)
 
-## Contributing 
+## Contributing/Development Guidlines 
 
-- [Development Guidlines](https://github.com/sfera-lab/sfera-doc/wiki/Development-Guidelines)
+- [Running](https://github.com/sfera-lab/sfera-doc/wiki/Running-iex-session-from-library)
+- [Testing Guidlines](https://github.com/sfera-lab/sfera-doc/wiki/Running-tests-Testing-Guidlines)
 
 
  <h1> Made with ❤️ by<span style="font-weight:700;" > <a href='https://github.com/sfera-lab/'>Sfera Lab</a></span>
