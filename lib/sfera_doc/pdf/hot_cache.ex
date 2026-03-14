@@ -39,7 +39,7 @@ defmodule SferaDoc.Pdf.HotCache do
 
   require Logger
 
-  @redis_conn __MODULE__
+  @redis_conn Module.concat(__MODULE__, Redis)
   @ets_table :sfera_doc_pdf_hot_cache
   @redis_prefix "sfera_doc:pdf"
   @sweep_interval_ms 60_000
@@ -99,7 +99,11 @@ defmodule SferaDoc.Pdf.HotCache do
   # ---------------------------------------------------------------------------
 
   def start_link(_opts \\ []) do
-    GenServer.start_link(__MODULE__, adapter(), name: __MODULE__)
+    case GenServer.start_link(__MODULE__, adapter(), name: __MODULE__) do
+      {:ok, pid} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @impl GenServer
@@ -118,8 +122,17 @@ defmodule SferaDoc.Pdf.HotCache do
 
   def init(:redis) do
     opts = redis_opts()
-    {:ok, _pid} = Redix.start_link(opts ++ [name: @redis_conn])
-    {:ok, :redis}
+
+    case Redix.start_link(opts ++ [name: @redis_conn]) do
+      {:ok, _pid} ->
+        {:ok, :redis}
+
+      {:error, {:already_started, _pid}} ->
+        {:ok, :redis}
+
+      {:error, reason} ->
+        {:stop, reason}
+    end
   end
 
   @impl GenServer
@@ -138,7 +151,7 @@ defmodule SferaDoc.Pdf.HotCache do
   defp redis_get(name, version, hash) do
     key = redis_key(name, version, hash)
 
-    case Redix.command(@redis_conn, ["GET", key]) do
+    case safe_redis_command(["GET", key]) do
       {:ok, nil} ->
         :miss
 
@@ -155,7 +168,7 @@ defmodule SferaDoc.Pdf.HotCache do
     ttl = hot_cache_ttl()
     key = redis_key(name, version, hash)
 
-    case Redix.command(@redis_conn, ["SET", key, binary, "EX", ttl]) do
+    case safe_redis_command(["SET", key, binary, "EX", ttl]) do
       {:ok, _} ->
         :ok
 
@@ -166,6 +179,14 @@ defmodule SferaDoc.Pdf.HotCache do
   end
 
   defp redis_key(name, version, hash), do: "#{@redis_prefix}:#{name}:#{version}:#{hash}"
+
+  defp safe_redis_command(cmd) do
+    try do
+      Redix.command(@redis_conn, cmd)
+    catch
+      :exit, reason -> {:error, reason}
+    end
+  end
 
   # ---------------------------------------------------------------------------
   # ETS helpers
@@ -224,6 +245,65 @@ defmodule SferaDoc.Pdf.HotCache do
     end
   end
 
-  defp normalize_redis_opts(opts) when is_binary(opts), do: [url: opts]
+  defp normalize_redis_opts(opts) when is_binary(opts) do
+    uri = URI.parse(opts)
+
+    unless uri.scheme in ["redis", "rediss"] and uri.host do
+      raise ArgumentError, "invalid redis URL: #{inspect(opts)}"
+    end
+
+    {username, password} =
+      case uri.userinfo do
+        nil -> {nil, nil}
+        userinfo -> parse_userinfo(userinfo)
+      end
+
+    database =
+      case uri.path do
+        nil -> nil
+        "" -> nil
+        "/" -> nil
+        path -> parse_database(path)
+      end
+
+    base_opts =
+      [
+        host: uri.host,
+        port: uri.port || 6379
+      ]
+      |> maybe_put(:username, username)
+      |> maybe_put(:password, password)
+      |> maybe_put(:database, database)
+
+    if uri.scheme == "rediss" do
+      Keyword.put(base_opts, :ssl, true)
+    else
+      base_opts
+    end
+  end
+
+  defp normalize_redis_opts({host, port}), do: [host: host, port: port]
   defp normalize_redis_opts(opts) when is_list(opts), do: opts
+
+  defp parse_userinfo(userinfo) do
+    case String.split(userinfo, ":", parts: 2) do
+      [user] -> {user, nil}
+      [user, pass] -> {user, pass}
+    end
+  end
+
+  defp parse_database(path) do
+    db = String.trim_leading(path, "/")
+
+    case Integer.parse(db) do
+      {int, ""} -> int
+      _ -> raise ArgumentError, "invalid redis database in URL path: #{inspect(path)}"
+    end
+  end
+
+  defp maybe_put(opts, _key, nil), do: opts
+  defp maybe_put(opts, key, value), do: Keyword.put(opts, key, value)
+
+  @doc false
+  def redis_conn_name, do: @redis_conn
 end

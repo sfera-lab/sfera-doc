@@ -175,8 +175,7 @@ defmodule SferaDoc.Pdf.HotCacheTest do
         end
 
         # Also stop the Redix connection that HotCache started
-        # (it has the same name as HotCache module since @redis_conn is __MODULE__)
-        case Process.whereis(HotCache) do
+        case Process.whereis(HotCache.redis_conn_name()) do
           nil -> :ok
           pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
         end
@@ -258,7 +257,10 @@ defmodule SferaDoc.Pdf.HotCacheTest do
       import ExUnit.CaptureLog
 
       # Stop Redis connection to simulate failure
-      GenServer.stop(HotCache)
+      case Process.whereis(HotCache.redis_conn_name()) do
+        nil -> :ok
+        pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
+      end
 
       log =
         capture_log(fn ->
@@ -272,7 +274,10 @@ defmodule SferaDoc.Pdf.HotCacheTest do
       import ExUnit.CaptureLog
 
       # Stop Redis connection to simulate failure
-      GenServer.stop(HotCache)
+      case Process.whereis(HotCache.redis_conn_name()) do
+        nil -> :ok
+        pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
+      end
 
       log =
         capture_log(fn ->
@@ -368,11 +373,19 @@ defmodule SferaDoc.Pdf.HotCacheTest do
       # This should work with string URL
       {:ok, _pid} = HotCache.start_link()
 
+      # Ensure a clean Redis state for the assertion
+      Redix.command(HotCache.redis_conn_name(), ["FLUSHDB"])
+
       # Verify it works
       assert :miss = HotCache.get("test", 1, "hash")
 
       # Cleanup
       case GenServer.whereis(HotCache) do
+        nil -> :ok
+        pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
+      end
+
+      case Process.whereis(HotCache.redis_conn_name()) do
         nil -> :ok
         pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
       end
@@ -394,11 +407,19 @@ defmodule SferaDoc.Pdf.HotCacheTest do
       # This should work with keyword list
       {:ok, _pid} = HotCache.start_link()
 
+      # Ensure a clean Redis state for the assertion
+      Redix.command(HotCache.redis_conn_name(), ["FLUSHDB"])
+
       # Verify it works
       assert :miss = HotCache.get("test", 1, "hash")
 
       # Cleanup
       case GenServer.whereis(HotCache) do
+        nil -> :ok
+        pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
+      end
+
+      case Process.whereis(HotCache.redis_conn_name()) do
         nil -> :ok
         pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
       end
@@ -425,11 +446,19 @@ defmodule SferaDoc.Pdf.HotCacheTest do
       # Should use the hot_cache-specific redis config
       {:ok, _pid} = HotCache.start_link()
 
+      # Ensure a clean Redis state for the assertion
+      Redix.command(HotCache.redis_conn_name(), ["FLUSHDB"])
+
       # Verify it works
       assert :miss = HotCache.get("test", 1, "hash")
 
       # Cleanup
       case GenServer.whereis(HotCache) do
+        nil -> :ok
+        pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
+      end
+
+      case Process.whereis(HotCache.redis_conn_name()) do
         nil -> :ok
         pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
       end
@@ -456,11 +485,19 @@ defmodule SferaDoc.Pdf.HotCacheTest do
       # Should use the hot_cache-specific redis URL
       {:ok, _pid} = HotCache.start_link()
 
+      # Ensure a clean Redis state for the assertion
+      Redix.command(HotCache.redis_conn_name(), ["FLUSHDB"])
+
       # Verify it works
       assert :miss = HotCache.get("test", 1, "hash")
 
       # Cleanup
       case GenServer.whereis(HotCache) do
+        nil -> :ok
+        pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
+      end
+
+      case Process.whereis(HotCache.redis_conn_name()) do
         nil -> :ok
         pid -> if Process.alive?(pid), do: GenServer.stop(pid, :normal, 1000)
       end

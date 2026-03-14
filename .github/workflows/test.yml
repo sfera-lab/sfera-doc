@@ -27,5 +27,17 @@ jobs:
          restore-keys: |
            ${{ runner.os }}-${{ matrix.elixir }}-otp${{ matrix.otp }}-mix-
       - run: mix deps.get
+      - name: Start test services
+        run: |
+          docker compose -f docker-compose.test.yml up -d azurite s3ninja redis
+          for i in {1..10}; do
+            if nc -z localhost 10000 && nc -z localhost 9444 && nc -z localhost 6379; then
+              echo "All test services are reachable"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker-compose.test.yml logs azurite s3ninja redis
+          exit 1
       - run: mix format --check-formatted
       - run: mix test

@@ -6,6 +6,33 @@ defmodule SferaDoc.Store.EctoTest do
   alias SferaDoc.{Store, Template}
 
   setup do
+    # Ensure table exists (migration tests may drop it)
+    Ecto.Adapters.SQL.query!(
+      SferaDoc.TestRepo,
+      """
+      CREATE TABLE IF NOT EXISTS sfera_doc_templates (
+        id BLOB PRIMARY KEY,
+        name TEXT NOT NULL,
+        body TEXT NOT NULL,
+        version INTEGER NOT NULL DEFAULT 1,
+        is_active INTEGER NOT NULL DEFAULT 0,
+        variables_schema TEXT,
+        inserted_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+      """
+    )
+
+    Ecto.Adapters.SQL.query!(
+      SferaDoc.TestRepo,
+      "CREATE INDEX IF NOT EXISTS sfera_doc_templates_name_index ON sfera_doc_templates (name)"
+    )
+
+    Ecto.Adapters.SQL.query!(
+      SferaDoc.TestRepo,
+      "CREATE UNIQUE INDEX IF NOT EXISTS sfera_doc_templates_name_version_index ON sfera_doc_templates (name, version)"
+    )
+
     # Clear table between tests
     Ecto.Adapters.SQL.query!(SferaDoc.TestRepo, "DELETE FROM sfera_doc_templates")
 

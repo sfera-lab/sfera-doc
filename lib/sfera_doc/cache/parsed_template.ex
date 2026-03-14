@@ -86,7 +86,11 @@ defmodule SferaDoc.Cache.ParsedTemplate do
   end
 
   def start_link(_opts \\ []) do
-    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+    case GenServer.start_link(__MODULE__, :ok, name: __MODULE__) do
+      {:ok, pid} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @impl GenServer
