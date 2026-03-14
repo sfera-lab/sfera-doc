@@ -2,7 +2,7 @@ defmodule SferaDoc.Pdf.ObjectStore.S3 do
   @moduledoc """
   Amazon S3 (or S3-compatible) PDF object storage.
 
-  Requires the optional dependencies `:ex_aws` and `:ex_aws_s3`.
+  Requires the optional dependencies `:ex_aws`, `:ex_aws_s3`, and `:sweet_xml`.
 
   ## Configuration
 
@@ -86,14 +86,26 @@ defmodule SferaDoc.Pdf.ObjectStore.S3 do
   end
 
   defp ensure_deps! do
-    unless Code.ensure_loaded?(ExAws) and Code.ensure_loaded?(ExAws.S3) do
-      raise """
-      SferaDoc.Pdf.ObjectStore.S3 requires the :ex_aws and :ex_aws_s3 dependencies.
-      Add to your mix.exs:
+    cond do
+      not (Code.ensure_loaded?(ExAws) and Code.ensure_loaded?(ExAws.S3)) ->
+        raise """
+        SferaDoc.Pdf.ObjectStore.S3 requires the :ex_aws and :ex_aws_s3 dependencies.
+        Add to your mix.exs:
 
-          {:ex_aws, "~> 2.5"},
-          {:ex_aws_s3, "~> 2.5"}
-      """
+            {:ex_aws, "~> 2.5"},
+            {:ex_aws_s3, "~> 2.5"}
+        """
+
+      not Code.ensure_loaded?(SweetXml) ->
+        raise """
+        SferaDoc.Pdf.ObjectStore.S3 requires the :sweet_xml dependency for XML parsing.
+        Add to your mix.exs:
+
+            {:sweet_xml, "~> 0.7"}
+        """
+
+      true ->
+        :ok
     end
   end
 end
