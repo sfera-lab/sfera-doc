@@ -15,7 +15,8 @@ defmodule SferaDoc.MixProject do
       aliases: aliases(),
       description: "PDF generation library with versioned Liquid templates stored in a database",
       package: package(),
-      docs: docs()
+      docs: docs(),
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -55,7 +56,8 @@ defmodule SferaDoc.MixProject do
       {:azurex, "~> 1.1", optional: true},
 
       # Dev/test
-      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      {:excoveralls, ">= 0.0.0", only: [:test], runtime: false}
     ]
   end
 
