@@ -1,5 +1,5 @@
 # Changelog
-## Unreleased
+## [0.1.0] 2026-03-15
 
 ### Changed
 - **Breaking:** Removed `update_template/3` function - use `create_template/3` for both creating and versioning templates (functionally identical)
@@ -20,6 +20,7 @@
   - Custom PDF object stores
   - Custom PDF cache adapters
 - Reference implementations and example code for each extensibility point
+- Integration Tests and Code Coverage Report
 
 ### Fixed
 - Corrected storage backend adapter interface documentation (was listing wrong callbacks)
