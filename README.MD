@@ -1,7 +1,7 @@
 ## SferaDoc
 
 [![Hex.pm](https://img.shields.io/hexpm/v/sfera_doc.svg)](https://hex.pm/packages/sfera_doc) [![HexDocs](https://img.shields.io/badge/hexdocs-reference-1f6feb)](https://hexdocs.pm/sfera_doc/SferaDoc.html) [![Website](https://img.shields.io/badge/website-sfera--doc-0ea5e9)](https://sfera-lab.github.io/sfera-doc/)
-
+[![codecov](https://codecov.io/github/sfera-lab/sfera-doc/graph/badge.svg?token=4LWIUF95R3)](https://codecov.io/github/sfera-lab/sfera-doc)
 
 
 PDF generation library for Elixir. Store versioned [Liquid](https://shopify.github.io/liquid/) templates in your database, render them to PDF.
