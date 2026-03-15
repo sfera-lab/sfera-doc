@@ -46,3 +46,7 @@ jobs:
         with:
           files: cover/excoveralls.json
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+
+
